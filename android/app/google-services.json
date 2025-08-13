@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "468196748153",
+    "project_id": "chess-app-fdaec",
+    "storage_bucket": "chess-app-fdaec.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:468196748153:android:5453e198dd3f6ec8a79da8",
+        "android_client_info": {
+          "package_name": "com.example.chessgame"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBmcXpmBJLiWdWRlNKFfjqQ6MP6iVvs7Qw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
