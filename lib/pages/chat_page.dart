@@ -1,5 +1,5 @@
 import 'package:chessgame/component/user_tile.dart';
-import 'package:chessgame/pages/message.dart';
+import 'package:chessgame/pages/message_page.dart';
 import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
 import 'package:flutter/material.dart';
@@ -49,7 +49,7 @@ class ChatPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MessagePage(receiverEmail: userData['email']),
+              builder: (context) => MessagePage(receiverEmail: userData['email'], receiverID: userData['uid'],),
             ),
           );
         },

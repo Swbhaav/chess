@@ -40,17 +40,17 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.games_outlined),
             label: 'Chess',
-            backgroundColor: Colors.blueAccent,
+            backgroundColor: Colors.blue,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.video_collection),
             label: 'Video',
-            backgroundColor: Colors.amber,
+            backgroundColor: Colors.blueAccent,
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble),
             label: 'Chat',
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.deepPurpleAccent,
           ),
         ],
       ),

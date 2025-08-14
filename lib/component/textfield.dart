@@ -7,6 +7,7 @@ class MyTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
   final  keyboardType;
+  final FocusNode? focusNode;
 
   const MyTextField({
     super.key,
@@ -16,6 +17,7 @@ class MyTextField extends StatelessWidget {
     required this.obscureText,
     this.prefixIcon,
     this.keyboardType,
+    this.focusNode,
   });
 
   @override
@@ -27,6 +29,7 @@ class MyTextField extends StatelessWidget {
         obscureText: obscureText,
         validator: validator,
         keyboardType: keyboardType,
+        focusNode: focusNode,
         decoration: InputDecoration(
 
           enabledBorder: OutlineInputBorder(
