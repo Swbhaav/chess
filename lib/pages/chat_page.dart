@@ -21,6 +21,7 @@ class ChatPage extends StatelessWidget {
         title: Text("Chat With Other"),
         centerTitle: true,
 
+
       ),
       body: StreamBuilder(
         stream: _chatService.getUserStream(),

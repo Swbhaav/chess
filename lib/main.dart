@@ -1,5 +1,5 @@
-import 'package:chessgame/game_board.dart';
 import 'package:chessgame/services/auth/auth_gate.dart';
+import 'package:chessgame/services/notification/noti_service.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 
@@ -7,6 +7,9 @@ import 'firebase/firebase_options.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
+  // init notification
+  NotiService().init();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );

@@ -1,4 +1,5 @@
 
+import 'package:chessgame/pages/notification_page.dart';
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
@@ -22,6 +23,7 @@ class _HomePageState extends State<HomePage> {
     GameBoard(),
     VideoPage(),
     ChatPage(),
+    NotificationPage(),
 
   ];
   @override
@@ -53,6 +55,12 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.chat_bubble),
             label: 'Chat',
+            backgroundColor: Colors.deepPurpleAccent,
+          ),
+
+          BottomNavigationBarItem(
+            icon: Icon(Icons.notification_important_rounded),
+            label: 'Notification',
             backgroundColor: Colors.deepPurpleAccent,
           ),
 
