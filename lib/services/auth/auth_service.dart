@@ -75,8 +75,16 @@ class AuthService {
         idToken: gAuth.idToken,
       );
 
+      final UserCredential userCredential = await _auth.signInWithCredential(authCredential);
+
+      await firestore.collection("Users").doc(userCredential.user!.uid).set({
+        'uid': userCredential.user!.uid,
+        'email' :gUser.email,
+      }, SetOptions(merge: true)); // this prevent overwriting existing data
       // Sign in to Firebase with the Google credential
-      return await _auth.signInWithCredential(authCredential);
+      return userCredential;
+
+
     } on FirebaseAuthException catch (e) {
       print('Firebase Auth Error: ${e.code} - ${e.message}');
       return false;

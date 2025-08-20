@@ -1,8 +1,8 @@
-import 'package:chessgame/pages/homepage.dart';
+
 import 'package:chessgame/component/piece.dart';
 import 'package:chessgame/component/square.dart';
 import 'package:chessgame/helper/helper.dart';
-import 'package:chessgame/pages/videopage.dart';
+
 import 'package:chessgame/pages/authPages/login.dart';
 import 'package:chessgame/pages/authPages/register.dart';
 import 'package:chessgame/services/auth/auth_service.dart';

@@ -1,5 +1,6 @@
 import 'package:chessgame/component/chat_bubble.dart';
 import 'package:chessgame/component/textfield.dart';
+import 'package:chessgame/pages/agora_call.dart';
 import 'package:chessgame/pages/call_page.dart';
 import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
@@ -87,7 +88,7 @@ class _MessagePageState extends State<MessagePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => CallPage(
+                    builder: (context) => AgoraCall(
                       receiverID: widget.receiverID,
                       receiverName: widget.receiverEmail,
                     ),

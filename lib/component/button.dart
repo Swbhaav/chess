@@ -5,8 +5,9 @@ import 'package:flutter/material.dart';
 class MyButton extends StatelessWidget {
   final void Function()? onTap;
   final String text;
+  final double? size;
 
-  const MyButton({super.key, required this.text, required this.onTap,} );
+  const MyButton({super.key, required this.text, required this.onTap, this.size} );
 
 
   @override
@@ -17,12 +18,12 @@ class MyButton extends StatelessWidget {
         padding: EdgeInsets.all(25),
         decoration: BoxDecoration(
           color: Colors.blueAccent,
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(50),
         ),
         child: Center(
           child: Text(
             text,
-            style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold),
+            style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold, fontSize:size ),
           ),
         ),
       ),

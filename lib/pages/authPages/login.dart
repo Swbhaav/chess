@@ -2,6 +2,7 @@ import 'package:chessgame/pages/authPages/phoneauth.dart';
 import 'package:chessgame/pages/authPages/register.dart';
 import 'package:chessgame/pages/homepage.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../component/button.dart';
 import '../../component/textfield.dart';
 import '../../services/auth/auth_service.dart';
@@ -78,7 +79,7 @@ class LoginPage extends StatelessWidget {
             child: Center(
               child: Text(
                 'Welcome to Login page',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
               ),
             ),
           ),
@@ -132,17 +133,23 @@ class LoginPage extends StatelessWidget {
                   ),
 
                   SizedBox(height: 10),
-                  MyButton(text: 'Login', onTap: () => login(context)),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 20, right: 20),
+                    child: MyButton(text: 'Login', onTap: () => login(context), size: 20,),
+                  ),
                   SizedBox(height: 10),
 
-                  Row(
-                    children: [
-                      Expanded(child: MyButton(text: 'Login with Google', onTap: () => loginWithGoogle(context))),
-                      SizedBox(width: 5,),
-                      Expanded(child: MyButton(text: 'Login with OTP', onTap: (){
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => PhoneAuth()));
-                      }))
-                    ],
+                  Padding(
+                    padding: const EdgeInsets.only(left: 10, right: 10),
+                    child: Row(
+                      children: [
+                        Expanded(child: MyButton(text: 'Login with Google', onTap: () => loginWithGoogle(context))),
+                        SizedBox(width: 5,),
+                        Expanded(child: MyButton(text: 'Login with OTP', onTap: (){
+                          Navigator.push(context, MaterialPageRoute(builder: (context) => PhoneAuth()));
+                        }))
+                      ],
+                    ),
                   ),
 
                   SizedBox(height: 10),

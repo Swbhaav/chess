@@ -15,25 +15,33 @@ class ChatPage extends StatelessWidget {
   }
 
   Widget _buildUserList() {
-    return StreamBuilder(
-      stream: _chatService.getUserStream(),
-      builder: (context, snapshot) {
-        // error
-        if (snapshot.hasError) {
-          return const Text('Error');
-        }
-        //Loading
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return CircularProgressIndicator();
-        }
 
-        //return ListView
-        return ListView(
-          children: snapshot.data!
-              .map<Widget>((userData) => _buildUserListItem(userData, context))
-              .toList(),
-        );
-      },
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Chat With Other"),
+        centerTitle: true,
+
+      ),
+      body: StreamBuilder(
+        stream: _chatService.getUserStream(),
+        builder: (context, snapshot) {
+          // error
+          if (snapshot.hasError) {
+            return const Text('Error');
+          }
+          //Loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return CircularProgressIndicator();
+          }
+
+          //return ListView
+          return ListView(
+            children: snapshot.data!
+                .map<Widget>((userData) => _buildUserListItem(userData, context))
+                .toList(),
+          );
+        },
+      ),
     );
   }
 

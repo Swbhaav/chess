@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
+import 'agora_call.dart';
+import 'agora_index.dart';
 import 'chat_page.dart';
 import 'videopage.dart';
 
@@ -20,6 +22,7 @@ class _HomePageState extends State<HomePage> {
     GameBoard(),
     VideoPage(),
     ChatPage(),
+
   ];
   @override
   Widget build(BuildContext context) {
@@ -52,6 +55,7 @@ class _HomePageState extends State<HomePage> {
             label: 'Chat',
             backgroundColor: Colors.deepPurpleAccent,
           ),
+
         ],
       ),
     );
