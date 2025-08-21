@@ -126,7 +126,7 @@ class LoginPage extends StatelessWidget {
                         );
                       },
                       child: Text(
-                        'Forget Password?',
+                        'Forgot Password?',
                         style: TextStyle(color: Colors.blueAccent),
                       ),
                     ),
