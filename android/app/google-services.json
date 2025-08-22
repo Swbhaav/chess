@@ -12,7 +12,20 @@
           "package_name": "com.example.chessgame"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "468196748153-ue7ofb064nsfpu5egv9t0q2qr5o3eo3j.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.chessgame",
+            "certificate_hash": "6961431d7951f93038c5240cf05c8e4004a03c1a"
+          }
+        },
+        {
+          "client_id": "468196748153-9aa4n17ig2k948speukb8eadcffcqcdj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBmcXpmBJLiWdWRlNKFfjqQ6MP6iVvs7Qw"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "468196748153-9aa4n17ig2k948speukb8eadcffcqcdj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "468196748153-00lukcmof9ghdlu6m111jbe1qe8n5c6l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.chessgame"
+              }
+            }
+          ]
         }
       }
     }

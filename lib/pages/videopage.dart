@@ -4,22 +4,29 @@ import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 
 class VideoPage extends StatefulWidget {
-  const VideoPage({super.key});
+  const VideoPage({super.key, required this.videoId});
+  final String videoId;
 
   @override
   State<VideoPage> createState() => _VideoPageState();
 }
 
 class _VideoPageState extends State<VideoPage> {
-  final YoutubePlayerController youtubePlayerController =
-  YoutubePlayerController(
-    initialVideoId: YoutubePlayer.convertUrlToId(
-      "https://youtu.be/QieFszQSlSI",
-    )!,
-    flags: const YoutubePlayerFlags(
-      autoPlay: false,
-    )
-  );
+  late YoutubePlayerController youtubePlayerController;
+
+  @override
+  void initState(){
+    super.initState();
+    youtubePlayerController =
+        YoutubePlayerController(
+            initialVideoId: widget.videoId,
+
+            flags: const YoutubePlayerFlags(
+              autoPlay: false,
+            )
+        );
+  }
+
   @override
   void deactivate() {
     // Pauses the video when navigating away from this screen
@@ -35,20 +42,23 @@ class _VideoPageState extends State<VideoPage> {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubePlayerBuilder(
-      player: YoutubePlayer(controller: youtubePlayerController),
-      builder: (context, player) {
-        return Padding(
-          padding: const EdgeInsets.only(top: 20.0),
-          child: Column(
-              children: [
+    return Scaffold(
 
-                    player,
+      body: YoutubePlayerBuilder(
+        player: YoutubePlayer(controller: youtubePlayerController),
+        builder: (context, player) {
+          return Padding(
+            padding: const EdgeInsets.only(top: 20.0),
+            child: Column(
+                children: [
 
-              ],
-            ),
-        );
-      },
+                      player,
+
+                ],
+              ),
+          );
+        },
+      ),
     );
   }
 }

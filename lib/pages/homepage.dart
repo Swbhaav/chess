@@ -1,12 +1,10 @@
 
+import 'package:chessgame/pages/Feed.dart';
 import 'package:chessgame/pages/notification_page.dart';
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
-import 'agora_call.dart';
-import 'agora_index.dart';
 import 'chat_page.dart';
-import 'videopage.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,7 +19,7 @@ class _HomePageState extends State<HomePage> {
   // Define the widget list for navigation
   List<Widget> pages = [
     GameBoard(),
-    VideoPage(),
+    Feed(),
     ChatPage(),
     NotificationPage(),
 
