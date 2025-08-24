@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 lib/firebase/firebase_options.dart
+lib/values/constant.dart
 
 
 # IntelliJ related
