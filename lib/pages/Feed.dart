@@ -1,4 +1,6 @@
 
+import 'dart:math';
+
 import 'package:chessgame/pages/videopage.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -13,6 +15,11 @@ final videoUrls= [
 ];
 class Feed extends StatelessWidget {
   const Feed({super.key});
+  static String getRandomVideoUrl(){
+    final random = Random();
+    final url = videoUrls[random.nextInt(videoUrls.length)];
+    return YoutubePlayer.convertUrlToId(url)!;
+  }
 
   @override
   Widget build(BuildContext context) {

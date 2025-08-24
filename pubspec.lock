@@ -386,7 +386,7 @@ packages:
     source: hosted
     version: "1.1.1"
   floating:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: floating
       sha256: e51ce1dbcab3ea83da0ad1b07f2091b99c0e8680184c780a000567f41234d454
@@ -518,11 +518,11 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.2"
-  flutter_logs:
+  flutter_logs_yoer:
     dependency: transitive
     description:
-      name: flutter_logs
-      sha256: "46880b3da87bf66d10c69505fd8dec1ef78fe1793fc909169ddb9aa9fe34f164"
+      name: flutter_logs_yoer
+      sha256: d74913d7471b74cdf24263e77f9cdcfb604569e562cd14a0f12bfe789ec32069
       url: "https://pub.dev"
     source: hosted
     version: "2.2.1"
@@ -724,10 +724,10 @@ packages:
     dependency: transitive
     description:
       name: just_audio
-      sha256: f978d5b4ccea08f267dae0232ec5405c1b05d3f3cd63f82097ea46c015d5c09e
+      sha256: "679637a3ec5b6e00f36472f5a3663667df00ee4822cbf5dafca0f568c710960a"
       url: "https://pub.dev"
     source: hosted
-    version: "0.9.46"
+    version: "0.10.4"
   just_audio_platform_interface:
     dependency: transitive
     description:
@@ -908,18 +908,18 @@ packages:
     dependency: "direct main"
     description:
       name: permission_handler
-      sha256: "59adad729136f01ea9e35a48f5d1395e25cba6cea552249ddbe9cf950f5d7849"
+      sha256: bc917da36261b00137bbc8896bf1482169cd76f866282368948f032c8c1caae1
       url: "https://pub.dev"
     source: hosted
-    version: "11.4.0"
+    version: "12.0.1"
   permission_handler_android:
     dependency: transitive
     description:
       name: permission_handler_android
-      sha256: d3971dcdd76182a0c198c096b5db2f0884b0d4196723d21a866fc4cdea057ebc
+      sha256: "1e3bc410ca1bf84662104b100eb126e066cb55791b7451307f9708d4007350e6"
       url: "https://pub.dev"
     source: hosted
-    version: "12.1.0"
+    version: "13.0.1"
   permission_handler_apple:
     dependency: transitive
     description:
@@ -1321,34 +1321,34 @@ packages:
     dependency: transitive
     description:
       name: zego_plugin_adapter
-      sha256: af781427cf0f299f5b5760b1d0fe8147b64abac8a535d4130c6eedc166d26326
+      sha256: "0d11a21950a82cf55d3240fe38b5da4736c83674ce01c8064dafddeaab27f0b9"
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.9"
+    version: "2.13.10"
   zego_uikit:
     dependency: transitive
     description:
       name: zego_uikit
-      sha256: "81308fc660b37fbc3cffe02d544e9121b55277d4c3b2ba6026161411bb7cc34d"
+      sha256: bbbfa1edde34cb508d294c3fa394f4442f5b9534b543c5e3c942f62d6b5bf457
       url: "https://pub.dev"
     source: hosted
-    version: "2.28.23"
+    version: "2.28.24"
   zego_uikit_prebuilt_call:
     dependency: "direct main"
     description:
       name: zego_uikit_prebuilt_call
-      sha256: fac5d4fbb776f14b09819d21d43dd379e44943c0ec6abf5fde1ea169cc69324a
+      sha256: d43388b1303cb3aa2f76b6d0f8d41c24cf3c057602f6de4ce7ab7aeb997b6135
       url: "https://pub.dev"
     source: hosted
-    version: "4.17.13"
+    version: "4.18.0"
   zego_uikit_signaling_plugin:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: zego_uikit_signaling_plugin
-      sha256: "9385a42c31d4ab2f0417e526be6d3aa4251eb296f5d8c286b8c5781280ab259f"
+      sha256: ed2ab0818086cbe6c88fe610c5069fa5290182bb217cd08043f5d24c18b85796
       url: "https://pub.dev"
     source: hosted
-    version: "2.8.15"
+    version: "2.8.16"
   zego_zim:
     dependency: transitive
     description:

@@ -88,7 +88,7 @@ class _MessagePageState extends State<MessagePage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AgoraCall(
+                    builder: (context) => CallPage(
                       receiverID: widget.receiverID,
                       receiverName: widget.receiverEmail,
                     ),

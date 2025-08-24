@@ -31,6 +31,9 @@ class CallPage extends StatelessWidget {
         callID: callID,
         userID: _authService.getCurrentUser()!.uid,
         userName: user.email!,
-        config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall());
+        config: ZegoUIKitPrebuiltCallConfig.oneOnOneVideoCall(
+
+        ),
+    );
   }
 }

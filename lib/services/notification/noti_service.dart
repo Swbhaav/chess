@@ -1,3 +1,6 @@
+import 'package:chessgame/pages/videopage.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -7,7 +10,10 @@ class NotiService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
   FlutterLocalNotificationsPlugin();
 
-  Future<void> init() async {
+  //Callback for notification taps
+  Function(String)? onNotificationTap;
+
+  Future<void> init({Function(String)? onNotificationTap}) async {
     try {
       tz.initializeTimeZones();
       final String currentTimeZone = await FlutterTimezone.getLocalTimezone();
@@ -24,7 +30,12 @@ class NotiService {
         iOS: iosInit,
       );
 
-      await _notificationsPlugin.initialize(initSettings);
+      await _notificationsPlugin.initialize(initSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response){
+        if(onNotificationTap != null){
+          onNotificationTap(response.payload ?? '');
+        }
+      });
 
       final androidPlugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
@@ -38,6 +49,7 @@ class NotiService {
   Future<void> showNotification({
     required String title,
     required String body,
+    String payload = '/video_page',
   }) async {
     const androidDetails = AndroidNotificationDetails(
       'chess_game_channel',
@@ -58,6 +70,7 @@ class NotiService {
         title,
         body,
         platformDetails,
+        payload: payload,
       );
     } catch (e) {
       print('Show notification error: $e');
@@ -70,6 +83,7 @@ class NotiService {
     required String body,
     required int hour,
     required int minute,
+    String payload= '/video_page',
   }) async {
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
@@ -106,6 +120,8 @@ class NotiService {
         scheduledDate,
         platformDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        payload: payload,
+
 
       );
       print('Notification scheduled for ${scheduledDate.toString()}');
