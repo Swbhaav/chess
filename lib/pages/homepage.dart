@@ -1,6 +1,6 @@
-
 import 'package:chessgame/pages/Feed.dart';
 import 'package:chessgame/pages/notification_page.dart';
+import 'package:chessgame/pages/youtube_home.dart';
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
@@ -22,15 +22,12 @@ class _HomePageState extends State<HomePage> {
     Feed(),
     ChatPage(),
     NotificationPage(),
-
+    YoutubeHomePage(),
   ];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index:  myIndex,
-        children: pages,
-      ),
+      body: IndexedStack(index: myIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.shifting,
         onTap: (index) {
@@ -62,6 +59,11 @@ class _HomePageState extends State<HomePage> {
             backgroundColor: Colors.deepPurpleAccent,
           ),
 
+          BottomNavigationBarItem(
+            icon: Icon(Icons.feed),
+            label: 'Youtube',
+            backgroundColor: Colors.deepPurpleAccent,
+          ),
         ],
       ),
     );

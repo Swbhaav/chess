@@ -1,4 +1,5 @@
 import 'package:chessgame/services/notification/noti_service.dart';
+import 'package:chessgame/services/youtube/yt_api_services.dart';
 import 'package:flutter/material.dart';
 
 class NotificationPage extends StatefulWidget {
@@ -27,7 +28,17 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        actions: [
+          IconButton(
+            onPressed: () async {
+              await YtApiServices().getAllVideosFromPlaylist();
+            },
+            icon: Icon(Icons.notification_important_rounded),
+          ),
+        ],
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
