@@ -47,9 +47,11 @@ dependencies:
   flutter_timezone: ^4.1.1
   image_picker: ^1.2.0
   floating: ^6.0.0
-  zego_uikit_signaling_plugin: ^2.8.15
+  zego_uikit_signaling_plugin: ^2.8.16
   http: ^1.5.0
   provider: ^6.1.5+1
+  googleapis: ^14.0.0
+  file_picker: ^10.3.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

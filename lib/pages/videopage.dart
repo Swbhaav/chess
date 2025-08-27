@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 final aspectRatios = [
@@ -24,10 +26,15 @@ class _VideoPageState extends State<VideoPage> {
   List<int> aspectRatio = aspectRatios.first;
   bool isPipAvailable = false;
   bool isInPipMode = false;
+  bool isBackgroundAudioEnabled = false;
 
   @override
   void initState() {
     super.initState();
+    if (Platform.isAndroid) {
+      // For Android, you might need to handle audio focus
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
     floating = Floating();
     requestPipAvailable();
     youtubePlayerController = YoutubePlayerController(
@@ -44,6 +51,12 @@ class _VideoPageState extends State<VideoPage> {
       setState(() {
         isInPipMode = status == PiPStatus.enabled;
       });
+      if (status == PiPStatus.enabled) {
+        // Ensure audio continues when entering PiP
+        if (!youtubePlayerController.value.isPlaying) {
+          youtubePlayerController.play();
+        }
+      }
     });
   }
 
@@ -56,23 +69,27 @@ class _VideoPageState extends State<VideoPage> {
   Future<void> enterPipMode() async {
     if (isPipAvailable) {
       try {
+        if (!youtubePlayerController.value.isPlaying) {
+          youtubePlayerController.play();
+        }
         await floating.enable(
-          ImmediatePiP(
-            aspectRatio: Rational(aspectRatio[0], aspectRatio[1]),
-          ),
+          ImmediatePiP(aspectRatio: Rational(aspectRatio[0], aspectRatio[1])),
         );
       } catch (e) {
         print('Error entering PiP mode: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to enter PiP mode: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to enter PiP mode: $e')));
       }
     }
   }
 
   @override
   void deactivate() {
-    youtubePlayerController.pause();
+    // Only pause if not entering PiP mode
+    if (!isInPipMode) {
+      youtubePlayerController.pause();
+    }
     super.deactivate();
   }
 
@@ -85,9 +102,7 @@ class _VideoPageState extends State<VideoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: isInPipMode ? null : AppBar(
-        title: const Text('YouTube Player'),
-      ),
+      appBar: isInPipMode ? null : AppBar(title: const Text('YouTube Player')),
       body: YoutubePlayerBuilder(
         player: YoutubePlayer(
           controller: youtubePlayerController,
@@ -103,16 +118,7 @@ class _VideoPageState extends State<VideoPage> {
             child: Column(
               children: [
                 if (!isInPipMode) player,
-                if (isInPipMode)
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        'Video is playing in Picture-in-Picture mode',
-                        style: Theme.of(context).textTheme.titleMedium,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  ),
+                if (isInPipMode) Expanded(child: Center(child: player)),
                 if (!isInPipMode) const SizedBox(height: 20),
                 if (!isInPipMode && isPipAvailable)
                   ElevatedButton.icon(

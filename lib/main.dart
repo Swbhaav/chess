@@ -1,18 +1,11 @@
 import 'package:chessgame/pages/Feed.dart';
-import 'package:chessgame/pages/call_invitation.dart';
-import 'package:chessgame/pages/notification_page.dart';
 import 'package:chessgame/pages/videopage.dart';
 import 'package:chessgame/services/auth/auth_gate.dart';
-import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/notification/noti_service.dart';
-import 'package:chessgame/values/constant.dart';
 import 'package:chessgame/viewmodel/yt_video_view_model.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
-
 import 'firebase/firebase_options.dart';
 
 class AppNavigator {
@@ -36,6 +29,7 @@ void main() async {
       }
     },
   );
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   // final AuthService _authservice = AuthService();
   // final User? user = _authservice.getCurrentUser();
@@ -49,7 +43,7 @@ void main() async {
   //       ),
   // );
 
-  runApp(const MyApp());
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

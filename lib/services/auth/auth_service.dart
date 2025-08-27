@@ -2,10 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/services.dart';
+import 'package:googleapis/youtube/v3.dart' as yt;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn googleSignIn = GoogleSignIn();
+  final GoogleSignIn googleSignIn = GoogleSignIn(
+    scopes: <String>[
+      'email',
+      yt.YouTubeApi.youtubeScope,
+      yt.YouTubeApi.youtubeUploadScope,
+    ],
+  );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
 
   //Getting Current User
@@ -56,7 +63,7 @@ class AuthService {
   }
 
   /// Sign In With Google
-  signInWithGoogle() async {
+  Future<Map<String, dynamic>?> signInWithGoogle() async {
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
@@ -75,25 +82,28 @@ class AuthService {
         idToken: gAuth.idToken,
       );
 
-      final UserCredential userCredential = await _auth.signInWithCredential(authCredential);
+      final UserCredential userCredential = await _auth.signInWithCredential(
+        authCredential,
+      );
 
       await firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
-        'email' :gUser.email,
+        'email': gUser.email,
       }, SetOptions(merge: true)); // this prevent overwriting existing data
       // Sign in to Firebase with the Google credential
-      return userCredential;
-
-
+      return {
+        'userCredential': userCredential,
+        'accessToken': gAuth.accessToken,
+      };
     } on FirebaseAuthException catch (e) {
       print('Firebase Auth Error: ${e.code} - ${e.message}');
-      return false;
+      return null;
     } on PlatformException catch (e) {
       print('Platform Error: ${e.code} - ${e.message}');
-      return false;
+      return null;
     } catch (e) {
       print('General Error: $e');
-      return false;
+      return null;
     }
   }
 

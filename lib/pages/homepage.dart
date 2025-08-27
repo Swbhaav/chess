@@ -1,4 +1,5 @@
 import 'package:chessgame/pages/Feed.dart';
+import 'package:chessgame/pages/allVideo_pages.dart';
 import 'package:chessgame/pages/notification_page.dart';
 import 'package:chessgame/pages/youtube_home.dart';
 import 'package:flutter/material.dart';
@@ -19,10 +20,9 @@ class _HomePageState extends State<HomePage> {
   // Define the widget list for navigation
   List<Widget> pages = [
     GameBoard(),
-    Feed(),
+    AllVideoPages(),
     ChatPage(),
     NotificationPage(),
-    YoutubeHomePage(),
   ];
   @override
   Widget build(BuildContext context) {
@@ -56,12 +56,6 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.notification_important_rounded),
             label: 'Notification',
-            backgroundColor: Colors.deepPurpleAccent,
-          ),
-
-          BottomNavigationBarItem(
-            icon: Icon(Icons.feed),
-            label: 'Youtube',
             backgroundColor: Colors.deepPurpleAccent,
           ),
         ],
