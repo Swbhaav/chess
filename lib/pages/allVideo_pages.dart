@@ -3,7 +3,7 @@ import 'package:chessgame/pages/Feed.dart';
 import 'package:chessgame/pages/youtube_home.dart';
 import 'package:flutter/material.dart';
 
-import 'googleDriveVideo.dart';
+import 'driveVideo.dart';
 
 class AllVideoPages extends StatelessWidget {
   const AllVideoPages({super.key});
@@ -11,6 +11,7 @@ class AllVideoPages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black38,
       body: Padding(
         padding: const EdgeInsets.all(45.0),
         child: Column(
@@ -41,12 +42,12 @@ class AllVideoPages extends StatelessWidget {
             SizedBox(height: 10),
 
             MyButton(
-              text: 'Google Drive Video Page',
+              text: 'Google Drive Video',
               size: 20,
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => GoogleDriveVideo()),
-                );
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (context) => Drivevideo()));
               },
             ),
           ],

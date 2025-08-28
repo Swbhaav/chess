@@ -1,6 +1,3 @@
-import 'package:chessgame/pages/videopage.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest.dart' as tz;
@@ -8,7 +5,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 
 class NotiService {
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
-  FlutterLocalNotificationsPlugin();
+      FlutterLocalNotificationsPlugin();
 
   //Callback for notification taps
   Function(String)? onNotificationTap;
@@ -30,16 +27,19 @@ class NotiService {
         iOS: iosInit,
       );
 
-      await _notificationsPlugin.initialize(initSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response){
-        if(onNotificationTap != null){
-          onNotificationTap(response.payload ?? '');
-        }
-      });
+      await _notificationsPlugin.initialize(
+        initSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (onNotificationTap != null) {
+            onNotificationTap(response.payload ?? '');
+          }
+        },
+      );
 
       final androidPlugin = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await androidPlugin?.requestNotificationsPermission();
     } catch (e) {
       print('Initialization error: $e');
@@ -83,7 +83,7 @@ class NotiService {
     required String body,
     required int hour,
     required int minute,
-    String payload= '/video_page',
+    String payload = '/video_page',
   }) async {
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
@@ -121,8 +121,6 @@ class NotiService {
         platformDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload: payload,
-
-
       );
       print('Notification scheduled for ${scheduledDate.toString()}');
     } catch (e) {

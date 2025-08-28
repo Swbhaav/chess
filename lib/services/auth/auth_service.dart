@@ -63,7 +63,7 @@ class AuthService {
   }
 
   /// Sign In With Google
-  Future<Map<String, dynamic>?> signInWithGoogle() async {
+  signInWithGoogle() async {
     try {
       // Trigger the authentication flow
       final GoogleSignInAccount? gUser = await GoogleSignIn().signIn();
