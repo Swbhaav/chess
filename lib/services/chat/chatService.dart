@@ -62,4 +62,23 @@ class ChatService {
         .orderBy("timestamp", descending: false)
         .snapshots();
   }
+
+  Future<void> updateActiveStatus(bool isOnline) async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    _firestore.collection('Users').doc(user.uid).update({'isOnline': isOnline});
+  }
+
+  Stream<Map<String, dynamic>> getUserStatusStream(String userID) {
+    return _firestore.collection('Users').doc(userID).snapshots().map((
+      snapshot,
+    ) {
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        return {'isOnline': data['isOnline'] ?? false};
+      }
+      return {'isOnline': false};
+    });
+  }
 }

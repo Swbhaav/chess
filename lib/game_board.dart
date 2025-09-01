@@ -1,4 +1,3 @@
-
 import 'package:chessgame/component/piece.dart';
 import 'package:chessgame/component/square.dart';
 import 'package:chessgame/helper/helper.dart';
@@ -645,12 +644,14 @@ class _GameBoardState extends State<GameBoard> {
 
         toolbarHeight: 32,
         actions: [
-          IconButton(onPressed: () => delete(context), icon: Icon(Icons.delete)),
+          IconButton(
+            onPressed: () => delete(context),
+            icon: Icon(Icons.delete),
+          ),
           IconButton(
             onPressed: () => logout(context),
             icon: Icon(Icons.logout),
           ),
-
         ],
       ),
       body: Column(
@@ -750,16 +751,18 @@ class _GameBoardState extends State<GameBoard> {
     }
   }
 
-  void delete(BuildContext context) async{
-    try{
+  void delete(BuildContext context) async {
+    try {
       await _authService.deleteAccount();
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (context) => RegisterPage()),
-            (route) => false, // Remove all previous routes
+        (route) => false, // Remove all previous routes
       );
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Account Deleted Successfully')));
-    }catch(e){
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Account Deleted Successfully')));
+    } catch (e) {
       throw Exception(e);
     }
   }

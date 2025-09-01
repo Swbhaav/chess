@@ -1,10 +1,7 @@
-
 import 'package:chessgame/pages/homepage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../pages/authPages/login.dart';
-
-
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -14,14 +11,14 @@ class AuthGate extends StatelessWidget {
     return Scaffold(
       body: StreamBuilder(
         //Check if user is logged in or not
-          stream: FirebaseAuth.instance.authStateChanges(),
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              return HomePage();
-            }else{
-              return LoginPage();
-            }
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return HomePage();
+          } else {
+            return LoginPage();
           }
+        },
       ),
     );
   }

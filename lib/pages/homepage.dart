@@ -1,7 +1,7 @@
-import 'package:chessgame/pages/Feed.dart';
 import 'package:chessgame/pages/allVideo_pages.dart';
 import 'package:chessgame/pages/notification_page.dart';
-import 'package:chessgame/pages/youtube_home.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
@@ -14,18 +14,47 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    setStatus('Online');
+  }
+
+  void setStatus(String status) async {
+    await _firestore.collection('Users').doc(_auth.currentUser!.uid).update({
+      'status': status,
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      //online
+      setStatus('Online');
+    } else {
+      //offline
+      setStatus('Offline');
+    }
+  }
+
   int myIndex = 0; // Default index is 0, so the "Video" page is shown initially
 
   // Define the widget list for navigation
-  List<Widget> pages = [
-    GameBoard(),
-    AllVideoPages(),
-    ChatPage(),
-    NotificationPage(),
-  ];
+
   @override
   Widget build(BuildContext context) {
+    List<Widget> pages = [
+      GameBoard(),
+      AllVideoPages(),
+      ChatPage(),
+      NotificationPage(),
+    ];
     return Scaffold(
       body: IndexedStack(index: myIndex, children: pages),
       bottomNavigationBar: BottomNavigationBar(

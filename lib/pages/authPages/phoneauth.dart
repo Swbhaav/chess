@@ -9,7 +9,6 @@ class PhoneAuth extends StatelessWidget {
   TextEditingController phoneController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,15 +24,22 @@ class PhoneAuth extends StatelessWidget {
               obscureText: false,
             ),
             SizedBox(height: 20),
-            ElevatedButton(onPressed: ()async{
-              String number = phoneController.text.trim();
+            ElevatedButton(
+              onPressed: () async {
+                String number = phoneController.text.trim();
 
                 try {
                   await FirebaseAuth.instance.verifyPhoneNumber(
                     verificationCompleted: (PhoneAuthCredential credential) {},
                     verificationFailed: (FirebaseAuthException ex) {},
                     codeSent: (String verificationId, int? resendToken) {
-                      Navigator.push(context, MaterialPageRoute(builder: (context)=>OtpScreen(verificationId: verificationId,)));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              OtpScreen(verificationId: verificationId),
+                        ),
+                      );
                     },
                     codeAutoRetrievalTimeout: (String verificationId) {},
                     phoneNumber: "+977$number",
@@ -41,8 +47,9 @@ class PhoneAuth extends StatelessWidget {
                 } catch (e) {
                   throw Exception(e);
                 }
-
-            }, child: Text('Verify Phone Number'))
+              },
+              child: Text('Verify Phone Number'),
+            ),
           ],
         ),
       ),

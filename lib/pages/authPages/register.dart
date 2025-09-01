@@ -2,12 +2,10 @@ import 'package:chessgame/pages/authPages/login.dart';
 import 'package:chessgame/pages/homepage.dart';
 import 'package:flutter/material.dart';
 
-
 import '../../component/button.dart';
 import '../../component/textfield.dart';
 import '../../game_board.dart';
 import '../../services/auth/auth_service.dart';
-
 
 class RegisterPage extends StatelessWidget {
   final TextEditingController _passwordController = TextEditingController();
@@ -31,9 +29,9 @@ class RegisterPage extends StatelessWidget {
             _passwordController.text.trim(),
           );
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Registered Successfully')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Registered Successfully')));
 
           Navigator.pushReplacement(
             context,
@@ -60,7 +58,6 @@ class RegisterPage extends StatelessWidget {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -86,8 +83,8 @@ class RegisterPage extends StatelessWidget {
                   child: Column(
                     children: [
                       MyTextField(
-                        validator: (value){
-                          if(value== null || value.isEmpty){
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
                             return 'Please enter email';
                           }
                           return null;
@@ -98,20 +95,20 @@ class RegisterPage extends StatelessWidget {
                         prefixIcon: Icons.email_rounded,
                       ),
                       MyTextField(
-                        validator: (value){
-                          if(value== null || value.isEmpty){
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
                             return 'Please enter password';
                           }
                           return null;
                         },
-                        controller: _passwordController ,
+                        controller: _passwordController,
                         obscureText: true,
                         hint: 'Password',
                         prefixIcon: Icons.password_sharp,
                       ),
                       MyTextField(
-                        validator: (value){
-                          if(value== null || value.isEmpty){
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
                             return 'Please enter password';
                           }
                           return null;
@@ -134,7 +131,7 @@ class RegisterPage extends StatelessWidget {
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>LoginPage() ,
+                                  builder: (context) => LoginPage(),
                                 ),
                               );
                             },
@@ -148,7 +145,10 @@ class RegisterPage extends StatelessWidget {
 
                       SizedBox(height: 10),
 
-                      MyButton(text: 'Register', onTap: () => register(context)),
+                      MyButton(
+                        text: 'Register',
+                        onTap: () => register(context),
+                      ),
                     ],
                   ),
                 ),

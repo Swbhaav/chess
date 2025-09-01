@@ -6,6 +6,7 @@ import 'package:googleapis/youtube/v3.dart' as yt;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GoogleSignIn googleSignIn = GoogleSignIn(
     scopes: <String>[
       'email',
@@ -14,6 +15,42 @@ class AuthService {
     ],
   );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+  Future<String> getCurrentUserStatus() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return 'offline';
+
+      final doc = await _firestore.collection('Users').doc(user.uid).get();
+      return doc.data()?['status'] ?? 'offline';
+    } catch (e) {
+      print('Error Getting status: $e');
+      return 'offline';
+    }
+  }
+
+  Future<String> getUserStatus(String userId) async {
+    try {
+      final doc = await _firestore.collection('Users').doc(userId).get();
+      return doc.data()?['status'] ?? 'offline';
+    } catch (e) {
+      print('Error getting use status: $e');
+      return 'offline';
+    }
+  }
+
+  Future<void> updateUserStatus(String status) async {
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        await _firestore.collection('Users').doc(user.uid).update({
+          'status': status,
+        });
+      }
+    } catch (e) {
+      print('Error updating status: $e');
+    }
+  }
 
   //Getting Current User
   User? getCurrentUser() {
@@ -50,6 +87,7 @@ class AuthService {
       firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
+        'status': "Unavalible",
       });
       return userCredential;
     } on FirebaseAuthException catch (e) {
@@ -89,6 +127,7 @@ class AuthService {
       await firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': gUser.email,
+        'status': "Unavalible",
       }, SetOptions(merge: true)); // this prevent overwriting existing data
       // Sign in to Firebase with the Google credential
       return {

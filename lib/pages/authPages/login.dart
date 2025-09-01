@@ -8,18 +8,16 @@ import '../../component/textfield.dart';
 import '../../services/auth/auth_service.dart';
 import 'forget_password.dart';
 
-
 class LoginPage extends StatelessWidget {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
   final _formkey = GlobalKey<FormState>();
   final authService = AuthService();
+
   LoginPage({super.key});
 
   void login(BuildContext context) async {
-
-
     // Form is first validated
     if (_formkey.currentState!.validate()) {
       // Checking if password is matching
@@ -50,14 +48,14 @@ class LoginPage extends StatelessWidget {
     }
   }
 
-  void loginWithGoogle(BuildContext context) async{
-    try{
+  void loginWithGoogle(BuildContext context) async {
+    try {
       await authService.signInWithGoogle();
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => HomePage()),
       );
-    }catch(e){
+    } catch (e) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -135,7 +133,11 @@ class LoginPage extends StatelessWidget {
                   SizedBox(height: 10),
                   Padding(
                     padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: MyButton(text: 'Login', onTap: () => login(context), size: 20,),
+                    child: MyButton(
+                      text: 'Login',
+                      onTap: () => login(context),
+                      size: 20,
+                    ),
                   ),
                   SizedBox(height: 10),
 
@@ -143,11 +145,26 @@ class LoginPage extends StatelessWidget {
                     padding: const EdgeInsets.only(left: 10, right: 10),
                     child: Row(
                       children: [
-                        Expanded(child: MyButton(text: 'Login with Google', onTap: () => loginWithGoogle(context))),
-                        SizedBox(width: 5,),
-                        Expanded(child: MyButton(text: 'Login with OTP', onTap: (){
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => PhoneAuth()));
-                        }))
+                        Expanded(
+                          child: MyButton(
+                            text: 'Login with Google',
+                            onTap: () => loginWithGoogle(context),
+                          ),
+                        ),
+                        SizedBox(width: 5),
+                        Expanded(
+                          child: MyButton(
+                            text: 'Login with OTP',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhoneAuth(),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -174,14 +191,8 @@ class LoginPage extends StatelessWidget {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-
                     ],
                   ),
-
-
-
-
-
                 ],
               ),
             ),

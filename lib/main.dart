@@ -1,11 +1,15 @@
 import 'package:chessgame/pages/Feed.dart';
+import 'package:chessgame/pages/overlay_test.dart';
 import 'package:chessgame/pages/videopage.dart';
 import 'package:chessgame/services/auth/auth_gate.dart';
+import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/notification/noti_service.dart';
 import 'package:chessgame/viewmodel/yt_video_view_model.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'component/chat_head.dart';
 import 'firebase/firebase_options.dart';
 
 class AppNavigator {
@@ -15,9 +19,9 @@ class AppNavigator {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   // init notification
   final notiService = NotiService();
+
   await notiService.init(
     onNotificationTap: (payload) {
       if (payload == '/video_page') {
@@ -46,6 +50,16 @@ void main() async {
   runApp(MyApp());
 }
 
+@pragma("vm:entry-point")
+void overlayMain() {
+  runApp(
+    const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Material(child: Text('My Overlay')),
+    ),
+  );
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -64,7 +78,7 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),
-        home: const AuthGate(),
+        home: AuthGate(),
       ),
     );
   }

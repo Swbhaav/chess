@@ -4,9 +4,16 @@ import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
 import 'package:flutter/material.dart';
 
-class ChatPage extends StatelessWidget {
+class ChatPage extends StatefulWidget {
   ChatPage({super.key});
+
+  @override
+  State<ChatPage> createState() => _ChatPageState();
+}
+
+class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
+
   final AuthService _authService = AuthService();
 
   @override
@@ -15,14 +22,8 @@ class ChatPage extends StatelessWidget {
   }
 
   Widget _buildUserList() {
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Chat With Other"),
-        centerTitle: true,
-
-
-      ),
+      appBar: AppBar(title: Text("Chat With Other"), centerTitle: true),
       body: StreamBuilder(
         stream: _chatService.getUserStream(),
         builder: (context, snapshot) {
@@ -38,7 +39,9 @@ class ChatPage extends StatelessWidget {
           //return ListView
           return ListView(
             children: snapshot.data!
-                .map<Widget>((userData) => _buildUserListItem(userData, context))
+                .map<Widget>(
+                  (userData) => _buildUserListItem(userData, context),
+                )
                 .toList(),
           );
         },
@@ -51,22 +54,25 @@ class ChatPage extends StatelessWidget {
     BuildContext context,
   ) {
     //display all user except current user
-    if(userData["email"] != _authService.getCurrentUser()!.email){
+    if (userData["email"] != _authService.getCurrentUser()!.email) {
       return UserTile(
         text: userData["email"],
+        status: userData['status'] ?? 'offline',
         onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => MessagePage(receiverEmail: userData['email'], receiverID: userData['uid'],),
+              builder: (context) => MessagePage(
+                receiverEmail: userData['email'],
+                receiverID: userData['uid'],
+                status: userData['status'] ?? 'offline',
+              ),
             ),
           );
         },
       );
-    }else{
-      return Container(
-
-      );
+    } else {
+      return Container();
     }
   }
 }

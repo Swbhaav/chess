@@ -1,6 +1,5 @@
 import 'package:chessgame/component/chat_bubble.dart';
 import 'package:chessgame/component/textfield.dart';
-import 'package:chessgame/pages/agora_call.dart';
 import 'package:chessgame/pages/call_page.dart';
 import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
@@ -11,10 +10,12 @@ import 'package:flutter/material.dart';
 class MessagePage extends StatefulWidget {
   final String receiverEmail;
   final String receiverID;
+  final String status;
   MessagePage({
     super.key,
     required this.receiverEmail,
     required this.receiverID,
+    required this.status,
   });
 
   @override
@@ -28,6 +29,7 @@ class _MessagePageState extends State<MessagePage> {
   //auth an chat service
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // for text field focus
   FocusNode myFocusNode = FocusNode();
@@ -71,13 +73,35 @@ class _MessagePageState extends State<MessagePage> {
       _messageController.clear();
     }
   }
+  //
+  // Future<void> updateActiveStatus(bool isOnline) async {
+  //   final user = _authService.getCurrentUser();
+  //   if (user == null) {
+  //     print('No authenticated user found');
+  //     return;
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(widget.receiverEmail),
+        title: StreamBuilder<DocumentSnapshot>(
+          stream: _firestore
+              .collection("Users")
+              .doc(widget.receiverID)
+              .snapshots(),
+          builder: (context, snapshot) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.receiverEmail),
+                Text(widget.status, style: TextStyle(fontSize: 14)),
+              ],
+            );
+          },
+        ),
         backgroundColor: foregroundColor,
         elevation: 0,
         actions: [

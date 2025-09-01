@@ -1,9 +1,7 @@
-
 import 'package:chessgame/component/textfield.dart';
 import 'package:chessgame/pages/homepage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 
 class OtpScreen extends StatefulWidget {
   String verificationId;
@@ -39,8 +37,13 @@ class _OtpScreenState extends State<OtpScreen> {
                         verificationId: widget.verificationId,
                         smsCode: otpController.text.toString(),
                       );
-                  FirebaseAuth.instance.signInWithCredential(credential).then((value){
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> HomePage()));
+                  FirebaseAuth.instance.signInWithCredential(credential).then((
+                    value,
+                  ) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => HomePage()),
+                    );
                   });
                 } catch (ex) {
                   throw Exception(ex);
