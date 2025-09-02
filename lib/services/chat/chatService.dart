@@ -7,6 +7,12 @@ class ChatService {
   // get instance of firestore
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  String getChatRoomID(String userID1, String userID2) {
+    List<String> ids = [userID1, userID2];
+    ids.sort();
+    return ids.join('_');
+  }
+
   //get user Stream
   Stream<List<Map<String, dynamic>>> getUserStream() {
     return _firestore.collection("Users").snapshots().map((snapshot) {

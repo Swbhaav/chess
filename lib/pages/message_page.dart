@@ -1,8 +1,13 @@
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:chessgame/component/chat_bubble.dart';
 import 'package:chessgame/component/textfield.dart';
+import 'package:chessgame/helper/global_chat_listener.dart';
 import 'package:chessgame/pages/call_page.dart';
 import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
+import 'package:chessgame/services/chat/chathead_service.dart';
 import 'package:chessgame/values/colors.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -22,7 +27,7 @@ class MessagePage extends StatefulWidget {
   State<MessagePage> createState() => _MessagePageState();
 }
 
-class _MessagePageState extends State<MessagePage> {
+class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
   // text controller
   final TextEditingController _messageController = TextEditingController();
 
@@ -30,26 +35,129 @@ class _MessagePageState extends State<MessagePage> {
   final ChatService _chatService = ChatService();
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final ChatHeadService _chatHeadService = ChatHeadService();
 
   // for text field focus
   FocusNode myFocusNode = FocusNode();
+  bool _isAppInForeground = true;
+  String? _currentChatRoomId;
+
+  // Port communication for overlay
+  static const String _kPortNameOverlay = 'OVERLAY';
+  static const String _kPortNameHome = 'UI';
+  final _receiverPort = ReceivePort();
+  SendPort? overlayPort;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    String senderID = _authService.getCurrentUser()!.uid;
+    _currentChatRoomId = _chatService.getChatRoomID(
+      senderID,
+      widget.receiverID,
+    );
+
+    GlobalChatListener().setActiveChat(_currentChatRoomId);
 
     myFocusNode.addListener(() {
       if (myFocusNode.hasFocus) {
         Future.delayed(const Duration(milliseconds: 500), () => scrollDown());
       }
     });
+
+    _initializePortCommunication();
+    _listenForNewMessages();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     myFocusNode.dispose();
     _messageController.dispose();
+    _receiverPort.close();
+
+    GlobalChatListener().setActiveChat(null);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    setState(() {
+      _isAppInForeground = state == AppLifecycleState.resumed;
+    });
+  }
+
+  void _initializePortCommunication() {
+    if (IsolateNameServer.lookupPortByName(_kPortNameHome) != null) {
+      IsolateNameServer.removePortNameMapping(_kPortNameHome);
+    }
+
+    IsolateNameServer.registerPortWithName(
+      _receiverPort.sendPort,
+      _kPortNameHome,
+    );
+
+    _receiverPort.listen((dynamic data) {
+      if (data is Map<String, dynamic> && data['action'] == 'openChat') {
+        _handleChatOpenFromOverlay(data);
+      }
+    });
+  }
+
+  void _handleChatOpenFromOverlay(Map<String, dynamic> data) {
+    if (data['chatRoomId'] == _currentChatRoomId) {
+      print('Chat head tapped for current conversation');
+      scrollDown();
+    } else {
+      print('Opening different chat from overlay: ${data['chatRoomId']}');
+    }
+  }
+
+  void _listenForNewMessages() {
+    String senderID = _authService.getCurrentUser()!.uid;
+
+    _chatService.getMessages(widget.receiverID, senderID).listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        var latestDoc = snapshot.docs.last;
+        Map<String, dynamic> data = latestDoc.data() as Map<String, dynamic>;
+
+        if (data['senderID'] != senderID) {
+          if (!_isAppInForeground) {
+            _showChatHead(data);
+          }
+        }
+      }
+    });
+  }
+
+  Future<void> _showChatHead(Map<String, dynamic> messageData) async {
+    try {
+      bool hasPermission = await _chatHeadService.checkOverlayPermission();
+
+      if (!hasPermission) {
+        await _chatHeadService.requestOverlayPermission();
+        return;
+      }
+
+      final chatHeadData = {
+        'senderName': widget.receiverEmail,
+        'message': messageData['message'],
+        'unreadCount': 1,
+        'chatRoomId': _currentChatRoomId,
+        'senderID': widget.receiverID,
+      };
+
+      await _chatHeadService.showChatHead();
+
+      Future.delayed(const Duration(milliseconds: 500), () {
+        overlayPort ??= IsolateNameServer.lookupPortByName(_kPortNameOverlay);
+        overlayPort?.send(chatHeadData);
+      });
+    } catch (e) {
+      print('Error showing chat head: $e');
+    }
   }
 
   //scroll controller
@@ -105,6 +213,16 @@ class _MessagePageState extends State<MessagePage> {
         backgroundColor: foregroundColor,
         elevation: 0,
         actions: [
+          IconButton(
+            onPressed: () async {
+              await _showChatHead({
+                'message': 'Test message from ${widget.receiverEmail}',
+                'senderID': widget.receiverID,
+              });
+            },
+            icon: Icon(Icons.chat_bubble),
+            tooltip: 'Test chat head',
+          ),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(

@@ -1,5 +1,5 @@
 import 'package:chessgame/model/yt_video.dart';
-import 'package:chessgame/pages/yt_video_player.dart';
+import 'package:chessgame/pages/youtubePages/yt_video_player.dart';
 import 'package:flutter/material.dart';
 
 class YoutubeVideoCard extends StatelessWidget {

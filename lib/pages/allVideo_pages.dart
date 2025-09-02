@@ -1,9 +1,10 @@
 import 'package:chessgame/component/button.dart';
 import 'package:chessgame/pages/Feed.dart';
-import 'package:chessgame/pages/youtube_home.dart';
+import 'package:chessgame/pages/driveVideoPages/drive_video_list.dart';
+import 'package:chessgame/pages/youtubePages/youtube_home.dart';
 import 'package:flutter/material.dart';
 
-import 'driveVideo.dart';
+import 'driveVideoPages/driveVideo.dart';
 
 class AllVideoPages extends StatelessWidget {
   const AllVideoPages({super.key});
@@ -47,7 +48,7 @@ class AllVideoPages extends StatelessWidget {
               onTap: () {
                 Navigator.of(
                   context,
-                ).push(MaterialPageRoute(builder: (context) => Drivevideo()));
+                ).push(MaterialPageRoute(builder: (context) => DriveFeed()));
               },
             ),
           ],

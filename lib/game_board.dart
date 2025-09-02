@@ -636,13 +636,13 @@ class _GameBoardState extends State<GameBoard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Colors.brown.shade600,
       appBar: AppBar(
         backgroundColor: Colors.grey[500],
         title: Text('Chess Game'),
         elevation: 0,
 
-        toolbarHeight: 32,
+        toolbarHeight: 40,
         actions: [
           IconButton(
             onPressed: () => delete(context),

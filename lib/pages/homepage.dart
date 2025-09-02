@@ -85,7 +85,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
           BottomNavigationBarItem(
             icon: Icon(Icons.notification_important_rounded),
             label: 'Notification',
-            backgroundColor: Colors.deepPurpleAccent,
+            backgroundColor: Colors.purple,
           ),
         ],
       ),

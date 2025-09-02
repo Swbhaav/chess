@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 import '../../component/button.dart';
 import '../../component/textfield.dart';
 import '../../services/auth/auth_service.dart';
@@ -37,28 +36,43 @@ class _ForgetPasswordState extends State<ForgetPassword> {
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Enter your email to reset you password'),
+          Text(
+            'Enter your email to reset you password',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+          ),
+          SizedBox(height: 10),
           Form(
             key: _formkey,
             child: Padding(
-              padding: const EdgeInsets.all(20.0),
+              padding: const EdgeInsets.only(left: 30, right: 30),
               child: Column(
                 children: [
-                  MyTextField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Enter Email';
-                      }
-                      return null;
-                    },
-                    controller: _emailController,
-                    obscureText: false,
-                    hint: 'Email',
-                    prefixIcon: Icons.email_rounded,
-                  ),
                   Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: MyButton(text: 'Reset Password', onTap: resetPassword),
+                    padding: const EdgeInsets.symmetric(horizontal: 15.0),
+                    child: MyTextField(
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Enter Email';
+                        }
+                        return null;
+                      },
+                      controller: _emailController,
+                      obscureText: false,
+                      hint: 'Email',
+                      prefixIcon: Icons.email_rounded,
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 5,
+                    ),
+                    child: MyButton(
+                      text: 'Reset Password',
+                      size: 17,
+                      onTap: resetPassword,
+                    ),
                   ),
                 ],
               ),

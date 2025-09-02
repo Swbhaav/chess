@@ -30,7 +30,7 @@ class LoginPage extends StatelessWidget {
 
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Logged in Successfully')));
+        ).showSnackBar(const SnackBar(content: Text('Logged in Successfully')));
 
         Navigator.pushReplacement(
           context,
@@ -69,135 +69,162 @@ class LoginPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Center(
-              child: Text(
-                'Welcome to Login page',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Padding(
+              padding: const EdgeInsets.only(right: 15),
+              child: Center(
+                child: Text(
+                  'Welcome to Login page',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),
+                ),
               ),
             ),
-          ),
 
-          Form(
-            key: _formkey,
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                children: [
-                  MyTextField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter email';
-                      }
-                      return null;
-                    },
-                    controller: _emailController,
-                    obscureText: false,
-                    hint: 'Email',
-                    prefixIcon: Icons.email_rounded,
-                  ),
-                  MyTextField(
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter password';
-                      }
-                      return null;
-                    },
-                    controller: _passwordController,
-                    obscureText: true,
-                    hint: 'Password',
-                    prefixIcon: Icons.password_sharp,
-                  ),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ForgetPassword(),
+            Form(
+              key: _formkey,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                      child: Column(
+                        children: [
+                          MyTextField(
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter email';
+                              }
+                              return null;
+                            },
+                            controller: _emailController,
+                            obscureText: false,
+                            hint: 'Email',
+                            prefixIcon: Icons.email_rounded,
                           ),
-                        );
-                      },
-                      child: Text(
-                        'Forgot Password?',
-                        style: TextStyle(color: Colors.blueAccent),
+                          MyTextField(
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter password';
+                              }
+                              return null;
+                            },
+                            controller: _passwordController,
+                            obscureText: true,
+                            hint: 'Password',
+                            prefixIcon: Icons.lock,
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-
-                  SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 20, right: 20),
-                    child: MyButton(
-                      text: 'Login',
-                      onTap: () => login(context),
-                      size: 20,
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10, right: 10),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: MyButton(
-                            text: 'Login with Google',
-                            onTap: () => loginWithGoogle(context),
-                          ),
+                    Align(
+                      alignment: Alignment.bottomRight,
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ForgetPassword(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Forgot Password?',
+                          style: TextStyle(color: Colors.blueAccent),
                         ),
-                        SizedBox(width: 5),
-                        Expanded(
-                          child: MyButton(
-                            text: 'Login with OTP',
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => PhoneAuth(),
-                                ),
-                              );
-                            },
+                      ),
+                    ),
+
+                    SizedBox(height: 5),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: MyButton(
+                        text: 'Login',
+                        onTap: () => login(context),
+                        size: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+
+                    const Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 30),
+                      child: Row(
+                        children: [
+                          Expanded(child: Divider(color: Colors.grey)),
+                          Text(
+                            'Or Continue with',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          Expanded(child: Divider(color: Colors.grey)),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 25),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: MyButton(
+                              text: 'Google',
+                              onTap: () => loginWithGoogle(context),
+                              size: 17,
+                            ),
+                          ),
+                          const SizedBox(width: 5),
+                          Expanded(
+                            child: MyButton(
+                              text: 'OTP',
+                              size: 17,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PhoneAuth(),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 5),
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text("Do not have account,"),
+                        const SizedBox(width: 5),
+
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => RegisterPage(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Register',
+                            style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ),
-                  ),
-
-                  SizedBox(height: 10),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text("Do not have account,"),
-                      SizedBox(width: 5),
-
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => RegisterPage(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'Register',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -6,7 +6,7 @@ class MyTextField extends StatelessWidget {
   final bool obscureText;
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
-  final  keyboardType;
+  final keyboardType;
   final FocusNode? focusNode;
 
   const MyTextField({
@@ -30,12 +30,11 @@ class MyTextField extends StatelessWidget {
         validator: validator,
         keyboardType: keyboardType,
         focusNode: focusNode,
-        decoration: InputDecoration(
 
+        decoration: InputDecoration(
           enabledBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.black),
             borderRadius: BorderRadius.circular(12),
-
           ),
           focusedBorder: OutlineInputBorder(
             borderSide: BorderSide(color: Colors.grey),
@@ -43,7 +42,6 @@ class MyTextField extends StatelessWidget {
           ),
           hintText: hint,
           prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
-
         ),
       ),
     );

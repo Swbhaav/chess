@@ -79,7 +79,7 @@ class RegisterPage extends StatelessWidget {
               Form(
                 key: _formkey,
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: const EdgeInsets.all(25.0),
                   child: Column(
                     children: [
                       MyTextField(
@@ -104,7 +104,7 @@ class RegisterPage extends StatelessWidget {
                         controller: _passwordController,
                         obscureText: true,
                         hint: 'Password',
-                        prefixIcon: Icons.password_sharp,
+                        prefixIcon: Icons.lock,
                       ),
                       MyTextField(
                         validator: (value) {
@@ -116,7 +116,7 @@ class RegisterPage extends StatelessWidget {
                         controller: _confirmPwController,
                         obscureText: true,
                         hint: 'Confirm Password',
-                        prefixIcon: Icons.password_sharp,
+                        prefixIcon: Icons.lock,
                       ),
                       SizedBox(height: 10),
 
@@ -145,9 +145,13 @@ class RegisterPage extends StatelessWidget {
 
                       SizedBox(height: 10),
 
-                      MyButton(
-                        text: 'Register',
-                        onTap: () => register(context),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: MyButton(
+                          text: 'Register',
+                          size: 17,
+                          onTap: () => register(context),
+                        ),
                       ),
                     ],
                   ),

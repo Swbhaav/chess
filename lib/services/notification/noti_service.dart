@@ -120,6 +120,7 @@ class NotiService {
         scheduledDate,
         platformDetails,
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        matchDateTimeComponents: DateTimeComponents.time,
         payload: payload,
       );
       print('Notification scheduled for ${scheduledDate.toString()}');
