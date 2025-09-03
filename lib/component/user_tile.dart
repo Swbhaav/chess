@@ -6,13 +6,14 @@ import 'package:flutter/material.dart';
 class UserTile extends StatelessWidget {
   final String text;
   final void Function()? onTap;
-  FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   final String status;
   @override
   Widget build(BuildContext context) {
-    // Icon(Icons.person),
-    // Text(text),
     return ListTile(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
+      selectedColor: Colors.blueGrey,
+      style: ListTileStyle.list,
       onTap: onTap,
       leading: CircleAvatar(child: Icon(Icons.person)),
       title: Text(text),

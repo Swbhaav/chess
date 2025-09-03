@@ -70,10 +70,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    // WidgetsBinding.instance.addObserver(this);
-    // _initializeOverlay();
+    WidgetsBinding.instance.addObserver(this);
+    _initializeOverlay();
 
-    // GlobalChatListener.initialize();
+    GlobalChatListener.initialize();
   }
 
   @override
@@ -90,13 +90,13 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       GlobalChatListener().setActiveChat(null);
     }
   }
-  //
-  // void _initializeOverlay() {
-  //   // Register the overlay entry point
-  //   FlutterOverlayWindow.overlayListener.listen((data) {
-  //     print("Overlay data received: $data");
-  //   });
-  // }
+
+  void _initializeOverlay() {
+    // Register the overlay entry point
+    FlutterOverlayWindow.overlayListener.listen((data) {
+      print("Overlay data received: $data");
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

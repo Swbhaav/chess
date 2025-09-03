@@ -92,6 +92,31 @@ class _NotificationPageState extends State<NotificationPage> {
                 style: TextStyle(color: Colors.white),
               ),
             ),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+              ),
+              onPressed: () async {
+                try {
+                  await notiService.cancelAllNotifications();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('All notifications cancelled !'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  print('Error canceling notifications: $e');
+                }
+              },
+              child: const Text(
+                'Cancle all',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           ],
         ),
       ),
