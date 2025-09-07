@@ -27,7 +27,13 @@ class _NotificationPageState extends State<NotificationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      backgroundColor: Colors.grey[400],
+      appBar: AppBar(
+        title: const Text('Notifications'),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -113,7 +119,7 @@ class _NotificationPageState extends State<NotificationPage> {
                 }
               },
               child: const Text(
-                'Cancle all',
+                'Cancel All Notification',
                 style: TextStyle(color: Colors.white),
               ),
             ),

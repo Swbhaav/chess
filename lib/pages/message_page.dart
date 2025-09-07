@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:isolate';
 import 'dart:ui';
 
@@ -69,6 +70,7 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
 
     _initializePortCommunication();
     _listenForNewMessages();
+    _startPortMonitor();
   }
 
   @override
@@ -87,6 +89,17 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
     setState(() {
       _isAppInForeground = state == AppLifecycleState.resumed;
     });
+
+    if (state == AppLifecycleState.resumed) {
+      _checkPermissionAfterResume();
+    }
+  }
+
+  Future<void> _checkPermissionAfterResume() async {
+    bool hasPermission = await _chatHeadService.checkOverlayPermission();
+    if (hasPermission) {
+      print('Overlay permission granted after resume');
+    }
   }
 
   void _initializePortCommunication() {
@@ -100,18 +113,88 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
     );
 
     _receiverPort.listen((dynamic data) {
-      if (data is Map<String, dynamic> && data['action'] == 'openChat') {
-        _handleChatOpenFromOverlay(data);
+      if (data is Map<String, dynamic>) {
+        String? action = data['action'];
+
+        switch (action) {
+          case 'openChat':
+            _handleChatOpenFromOverlay(data);
+            break;
+          case 'overlayClosed':
+            print('Overlay was closed for chat: ${data['chatRoomId']}');
+            break;
+          default:
+            print('Unknown action: $action');
+        }
       }
     });
   }
 
   void _handleChatOpenFromOverlay(Map<String, dynamic> data) {
+    print('Received openChat action with data: $data');
+
     if (data['chatRoomId'] == _currentChatRoomId) {
-      print('Chat head tapped for current conversation');
-      scrollDown();
+      print(
+        'Chat head tapped for current conversation - bringing to foreground',
+      );
+
+      // Bring the current conversation to foreground
+      Navigator.of(context).popUntil((route) => route.isFirst);
+
+      // Scroll to bottom to show latest messages
+      Future.delayed(const Duration(milliseconds: 100), () {
+        scrollDown();
+      });
     } else {
       print('Opening different chat from overlay: ${data['chatRoomId']}');
+
+      // Here you would navigate to the different chat
+      // But since you're in MessagePage, you might want to handle this globally
+      String? senderName = data['senderName'];
+      String? chatRoomId = data['chatRoomId'];
+
+      if (senderName != null && chatRoomId != null) {
+        // For now, just bring the app to foreground and let user navigate manually
+        // Or implement navigation logic here
+        Navigator.of(context).popUntil((route) => route.isFirst);
+
+        // You could show a snackbar to inform user
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('New message from $senderName'),
+            action: SnackBarAction(
+              label: 'Open',
+              onPressed: () {
+                // Navigate to the specific chat
+                _navigateToSpecificChat(senderName, chatRoomId);
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateToSpecificChat(String senderName, String chatRoomId) {
+    // Extract receiver ID from chatRoomId
+    List<String> userIds = chatRoomId.split('_');
+    String currentUserId = _authService.getCurrentUser()!.uid;
+    String receiverId = userIds.firstWhere(
+      (id) => id != currentUserId,
+      orElse: () => userIds.isNotEmpty ? userIds.first : '',
+    );
+
+    if (receiverId.isNotEmpty) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MessagePage(
+            receiverEmail: senderName,
+            receiverID: receiverId,
+            status: 'Online',
+          ),
+        ),
+      );
     }
   }
 
@@ -135,9 +218,29 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
   Future<void> _showChatHead(Map<String, dynamic> messageData) async {
     try {
       bool hasPermission = await _chatHeadService.checkOverlayPermission();
+      if (!hasPermission) {
+        print('Overlay permission not granted, requesting.. ');
+
+        if (mounted) {
+          _showPermissionDialog();
+        }
+        return;
+      }
+
+      bool permissionGranted = await _chatHeadService
+          .requestOverlayPermissionWithGuidance();
+
+      if (!permissionGranted) {
+        print('User did not grant overlay permission');
+        return;
+      }
+
+      await Future.delayed(const Duration(milliseconds: 1000));
+
+      hasPermission = await _chatHeadService.checkOverlayPermission();
 
       if (!hasPermission) {
-        await _chatHeadService.requestOverlayPermission();
+        print('Permission chek failed after request');
         return;
       }
 
@@ -149,15 +252,105 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
         'senderID': widget.receiverID,
       };
 
-      await _chatHeadService.showChatHead();
+      bool overlayShown = await _chatHeadService.showChatHead();
 
-      Future.delayed(const Duration(milliseconds: 500), () {
-        overlayPort ??= IsolateNameServer.lookupPortByName(_kPortNameOverlay);
-        overlayPort?.send(chatHeadData);
-      });
+      if (overlayShown) {
+        await Future.delayed(const Duration(milliseconds: 800));
+
+        overlayPort = IsolateNameServer.lookupPortByName(_kPortNameOverlay);
+
+        if (overlayPort != null) {
+          overlayPort!.send(chatHeadData);
+        } else {
+          print('Overlay port not available, retrying');
+          await Future.delayed(const Duration(milliseconds: 300));
+          overlayPort = IsolateNameServer.lookupPortByName(_kPortNameOverlay);
+          overlayPort?.send(chatHeadData);
+        }
+      }
     } catch (e) {
       print('Error showing chat head: $e');
     }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Permission Required'),
+        content: Text(
+          'Chat heads require overlay permission. You will be redirected to system settings to grant this permission.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _testChatHead() async {
+    try {
+      // Debug permission status first
+      await _chatHeadService.debugPermissionStatus();
+
+      bool success = await _chatHeadService.showChatHeadWithPermissionCheck();
+
+      if (success) {
+        print('Test chat head shown successfully');
+
+        await Future.delayed(const Duration(milliseconds: 800));
+        await _showChatHead({
+          'message':
+              'Test Message From ${widget.receiverEmail} - Hold icon to dismiss chat head directly',
+          'senderID': widget.receiverID,
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Chat head displayed successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        print('Failed to show test chat head');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to show chat head. Check permissions.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error in test chat head: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
+  }
+
+  void _startPortMonitor() {
+    Timer.periodic(const Duration(seconds: 1), (timer) {
+      overlayPort = IsolateNameServer.lookupPortByName(_kPortNameOverlay);
+      if (overlayPort != null) {
+        print('Overlay port connected');
+        timer.cancel();
+      }
+    });
   }
 
   //scroll controller
@@ -214,12 +407,7 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
         elevation: 0,
         actions: [
           IconButton(
-            onPressed: () async {
-              await _showChatHead({
-                'message': 'Test message from ${widget.receiverEmail}',
-                'senderID': widget.receiverID,
-              });
-            },
+            onPressed: _testChatHead,
             icon: Icon(Icons.chat_bubble),
             tooltip: 'Test chat head',
           ),
@@ -308,7 +496,7 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
       children: [
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(20.0),
             child: MyTextField(
               hint: "Type a message",
               controller: _messageController,

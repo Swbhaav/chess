@@ -24,7 +24,13 @@ class Feed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Flutter YouTube")),
+      backgroundColor: Colors.grey[400],
+      appBar: AppBar(
+        title: const Text("Flutter YouTube"),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
 
       body: ListView.builder(
         itemCount: videoUrls.length,

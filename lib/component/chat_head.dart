@@ -31,6 +31,8 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
   late Animation<double> _scaleAnimation;
   late Animation<double> _pulseAnimation;
 
+  bool _isLongPressing = false;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -57,10 +59,12 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
       IsolateNameServer.removePortNameMapping(_kPortNameOverlay);
     }
 
-    IsolateNameServer.registerPortWithName(
-      _receiverPort.sendPort,
-      _kPortNameOverlay,
-    );
+    if (IsolateNameServer.lookupPortByName(_kPortNameOverlay) == null) {
+      IsolateNameServer.registerPortWithName(
+        _receiverPort.sendPort,
+        _kPortNameOverlay,
+      );
+    }
 
     _receiverPort.listen((dynamic data) {
       if (data is Map<String, dynamic>) {
@@ -88,6 +92,10 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
   void dispose() {
     _animationController.dispose();
     _receiverPort.close();
+
+    if (IsolateNameServer.lookupPortByName(_kPortNameOverlay) != null) {
+      IsolateNameServer.removePortNameMapping(_kPortNameOverlay);
+    }
     super.dispose();
   }
 
@@ -102,8 +110,56 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
     FlutterOverlayWindow.closeOverlay();
   }
 
+  Future<void> _cleanShutdown() async {
+    try {
+      homePort ??= IsolateNameServer.lookupPortByName(_kPortNameHome);
+      homePort?.send({'action': 'overlayClosed', 'chatRoomId': chatRoomId});
+      await FlutterOverlayWindow.closeOverlay();
+
+      await Future.delayed(const Duration(milliseconds: 100));
+    } catch (e) {
+      print('Error during clean shutdown: $e');
+    }
+  }
+
   void _dismissChatHead() {
-    FlutterOverlayWindow.closeOverlay();
+    _cleanShutdown();
+  }
+
+  void _handleTap() async {
+    if (_isLongPressing) return; // Ignore tap if long press is in progress
+
+    try {
+      await FlutterOverlayWindow.resizeOverlay(350, 350, false);
+      if (mounted) {
+        setState(() {
+          _currentShape = BoxShape.rectangle;
+        });
+      }
+    } catch (e) {
+      print('Error resizing overlay: $e');
+    }
+  }
+
+  void _handleLongPressStart() {
+    print('Long press started');
+    setState(() {
+      _isLongPressing = true;
+    });
+  }
+
+  void _handleLongPressEnd() {
+    print('Long press ended - dismissing chat head');
+    _dismissChatHead();
+  }
+
+  void _handleLongPressCancel() {
+    print('Long press cancelled');
+    if (mounted) {
+      setState(() {
+        _isLongPressing = false;
+      });
+    }
   }
 
   @override
@@ -138,23 +194,22 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
                 return Transform.scale(
                   scale: _scaleAnimation.value,
                   child: GestureDetector(
-                    onTap: () async {
-                      await FlutterOverlayWindow.resizeOverlay(500, 400, false);
-                      setState(() {
-                        _currentShape = BoxShape.rectangle;
-                      });
-                    },
-                    onLongPress: _dismissChatHead,
+                    onTap: _handleTap,
+                    onLongPressStart: (_) => _handleLongPressStart(),
+                    onLongPressEnd: (_) => _handleLongPressEnd(),
+                    onLongPressCancel: _handleLongPressCancel,
                     child: AnimatedBuilder(
                       animation: _pulseAnimation,
                       builder: (context, child) {
                         return Transform.scale(
-                          scale: _pulseAnimation.value,
+                          scale:
+                              _pulseAnimation.value *
+                              (_isLongPressing ? 0.9 : 1.0),
                           child: Container(
-                            width: 60,
-                            height: 60,
+                            width: 100,
+                            height: 100,
                             decoration: BoxDecoration(
-                              color: color,
+                              color: _isLongPressing ? Colors.red : color,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
@@ -250,7 +305,7 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
         children: [
           Row(
             children: [
-              CircleAvatar(radius: 20, backgroundImage: null),
+              CircleAvatar(radius: 40, backgroundImage: null),
               const SizedBox(width: 8),
 
               Expanded(
@@ -325,7 +380,7 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(20),
                     ),
                   ),
                 ),

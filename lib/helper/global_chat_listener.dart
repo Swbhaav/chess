@@ -128,7 +128,7 @@ class GlobalChatListener {
   }
 
   Future<bool> _isAppInBackground() async {
-    return !_chatHeadService.isOverlayActive;
+    return !await _chatHeadService.isOverlayActive;
   }
 
   static void initialize() {

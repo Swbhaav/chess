@@ -52,10 +52,7 @@ void main() async {
 @pragma("vm:entry-point")
 void overlayMain() {
   runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: const OverlayWidgetState(),
-    ),
+    MaterialApp(debugShowCheckedModeBanner: false, home: OverlayWidgetState()),
   );
 }
 
@@ -85,6 +82,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached) {
       GlobalChatListener().setActiveChat(null);

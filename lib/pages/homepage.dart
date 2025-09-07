@@ -67,7 +67,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
         currentIndex: myIndex,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.games_outlined),
+            icon: Icon(Icons.sports_esports),
             label: 'Chess',
             backgroundColor: Colors.blue,
           ),

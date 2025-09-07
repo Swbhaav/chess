@@ -446,13 +446,19 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
 
+    // Store the current player info BEFORE clearing selectedPiece
+    bool currentPlayerIsWhite = selectedPiece!.isWhite;
+
     // Make the move
     board[newRow][newCol] = selectedPiece;
     board[selectedRow][selectedCol] = null;
 
-    // Check for check/checkmate
-    bool opponentInCheck = isInCheck(!isWhiteTurn);
-    bool opponentCheckmate = opponentInCheck && isCheckmate(!isWhiteTurn);
+    // Switchp turns
+    isWhiteTurn = !isWhiteTurn;
+
+    // Check for check/checkmate (now checking the opponent)
+    bool opponentInCheck = isInCheck(isWhiteTurn);
+    bool opponentCheckmate = opponentInCheck && isCheckmate(isWhiteTurn);
 
     setState(() {
       selectedPiece = null;
@@ -462,15 +468,13 @@ class _GameBoardState extends State<GameBoard> {
       checkStatus = opponentInCheck;
     });
 
-    isWhiteTurn = !isWhiteTurn;
-
     // Show game over if checkmate
     if (opponentCheckmate) {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text("CHECKMATE!"),
-          content: Text(selectedPiece!.isWhite ? "White wins!" : "Black wins!"),
+          content: Text(currentPlayerIsWhite ? "White wins!" : "Black wins!"),
           actions: [
             TextButton(
               onPressed: () {
@@ -622,7 +626,6 @@ class _GameBoardState extends State<GameBoard> {
 
   //Reset To new Game
   void resetGame() {
-    Navigator.pop(context);
     _initializeBoard();
     checkStatus = false;
     whitePieceTaken.clear();
@@ -636,9 +639,10 @@ class _GameBoardState extends State<GameBoard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.brown.shade600,
+      backgroundColor: Colors.grey[400],
       appBar: AppBar(
-        backgroundColor: Colors.grey[500],
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
         title: Text('Chess Game'),
         elevation: 0,
 

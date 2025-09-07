@@ -20,7 +20,12 @@ class DriveFeed extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Drive Video Feed")),
+      appBar: AppBar(
+        title: const Text("Drive Video Feed"),
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
 
       body: Container(
         decoration: const BoxDecoration(
@@ -46,10 +51,10 @@ class DriveFeed extends StatelessWidget {
             Expanded(
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
+                  crossAxisCount: 1,
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
-                  childAspectRatio: 0.8,
+                  childAspectRatio: 1,
                 ),
                 itemCount: videoUrls.length,
                 itemBuilder: (context, index) {

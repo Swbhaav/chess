@@ -11,7 +11,6 @@ class Square extends StatelessWidget {
   final bool isValidMoves;
   final void Function()? onTap;
 
-
   const Square({
     super.key,
     required this.isWhite,
@@ -23,25 +22,22 @@ class Square extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-
     Color? squareColor;
 
     //if selected, square is green
-    if(isSelected){
-      squareColor= Colors.green;
-    }
-    else if(isValidMoves){
-      squareColor = Colors.green.shade200;
-    }
-    else{
-      squareColor= isWhite ? foregroundColor : backgroundColor;
+    if (isSelected) {
+      squareColor = Colors.green;
+    } else if (isValidMoves) {
+      squareColor = Colors.green.shade300;
+    } else {
+      squareColor = isWhite ? Color(0xFF928C8C) : Color(0xFF964D22);
     }
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         color: squareColor,
-        margin: EdgeInsets.all(isValidMoves ? 8: 0),
+        margin: EdgeInsets.all(isValidMoves ? 8 : 0),
         child: piece != null
             ? Image.asset(
                 piece!.imagePath,

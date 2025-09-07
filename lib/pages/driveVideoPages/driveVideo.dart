@@ -137,7 +137,9 @@ class _DrivevideoState extends State<Drivevideo> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        backgroundColor: Colors.blue.shade600,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text('Drive Video'),
         actions: [
           IconButton(
