@@ -102,7 +102,15 @@ class _VideoPageState extends State<VideoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: isInPipMode ? null : AppBar(title: const Text('YouTube Player')),
+      backgroundColor: Colors.grey[400],
+      appBar: isInPipMode
+          ? null
+          : AppBar(
+              title: const Text('YouTube Player'),
+              backgroundColor: Colors.deepPurple,
+              foregroundColor: Colors.white,
+              elevation: 0,
+            ),
       body: YoutubePlayerBuilder(
         player: YoutubePlayer(
           controller: youtubePlayerController,

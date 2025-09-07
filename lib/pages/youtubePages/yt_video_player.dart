@@ -72,6 +72,7 @@ class _YoutubeVideoPlayerState extends State<YoutubeVideoPlayer>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[400],
       body: YoutubePlayerBuilder(
         player: YoutubePlayer(controller: _controller),
         builder: (context, player) {

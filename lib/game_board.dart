@@ -453,7 +453,7 @@ class _GameBoardState extends State<GameBoard> {
     board[newRow][newCol] = selectedPiece;
     board[selectedRow][selectedCol] = null;
 
-    // Switchp turns
+    // Switch turns
     isWhiteTurn = !isWhiteTurn;
 
     // Check for check/checkmate (now checking the opponent)

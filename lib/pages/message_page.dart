@@ -9,7 +9,7 @@ import 'package:chessgame/pages/call_page.dart';
 import 'package:chessgame/services/auth/auth_service.dart';
 import 'package:chessgame/services/chat/chatService.dart';
 import 'package:chessgame/services/chat/chathead_service.dart';
-import 'package:chessgame/values/colors.dart';
+import 'package:chessgame/services/notification/enhanced_noti_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -71,6 +71,58 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
     _initializePortCommunication();
     _listenForNewMessages();
     _startPortMonitor();
+    _initializeNotifications();
+  }
+
+  Future<void> _initializeNotifications() async {
+    await EnhancedNotificationService.initialize(
+      onChatNotificationTap: _handleChatNotificationTap,
+    );
+
+    String? token = await EnhancedNotificationService.getToken();
+    if (token != null) {
+      await _storeUserToken(token);
+    }
+  }
+
+  void _handleChatNotificationTap(Map<String, dynamic> data) {
+    print('CHat notification tapped: $data');
+
+    String? chatRoomId = data['chatRoomId'];
+    String? senderId = data['senderId'];
+    String? senderName = data['senderEmail'];
+
+    if (chatRoomId != null && senderId != null && senderName != null) {
+      if (chatRoomId == _currentChatRoomId) {
+        Future.delayed(const Duration(milliseconds: 100), () {
+          scrollDown();
+        });
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MessagePage(
+              receiverEmail: senderName,
+              receiverID: senderId,
+              status: 'Online',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _storeUserToken(String token) async {
+    try {
+      String currentUserId = _authService.getCurrentUser()!.uid;
+      await _firestore.collection('Users').doc(currentUserId).update({
+        'fcmToken': token,
+        'lastTokenUpdate': FieldValue.serverTimestamp(),
+      });
+      print('FCM token stored successfully');
+    } catch (e) {
+      print('Error storing FCM token: $e');
+    }
   }
 
   @override
@@ -209,10 +261,61 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
         if (data['senderID'] != senderID) {
           if (!_isAppInForeground) {
             _showChatHead(data);
+          } else {
+            _showForegroundNotification(data);
           }
         }
       }
     });
+  }
+
+  Future<void> _showForegroundNotification(
+    Map<String, dynamic> messageData,
+  ) async {
+    await EnhancedNotificationService.showLocalChatNotification(
+      senderName: widget.receiverEmail,
+      message: messageData['message'] ?? 'New message',
+      chatData: {
+        'type': 'chat_message',
+        'chatRoomId': _currentChatRoomId,
+        'senderId': widget.receiverID,
+        'senderName': widget.receiverEmail,
+        'receiverId': _authService.getCurrentUser()!.uid,
+        'message': messageData['message'],
+      },
+    );
+  }
+
+  Future<void> _sendPushNotificationToReceiver(String message) async {
+    try {
+      DocumentSnapshot userDoc = await _firestore
+          .collection('Users')
+          .doc(widget.receiverID)
+          .get();
+
+      if (userDoc.exists) {
+        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
+        String? receiverToken = userData['fcmToken'];
+
+        if (receiverToken != null) {
+          String currentUserEmail =
+              _authService.getCurrentUser()!.email ?? 'Unknown';
+
+          await EnhancedNotificationService.sendChatNotification(
+            recipientToken: receiverToken,
+            senderName: currentUserEmail,
+            message: message,
+            chatRoomId: _currentChatRoomId!,
+            senderId: _authService.getCurrentUser()!.uid,
+            receiverId: widget.receiverID,
+            serverKey:
+                'BDZkoDZ1ENKsI2-XarMR_K5xNv-8ABALzI7QU7huiUVMwnZtU7vfP_tryPffW2wJrbJAZHQjryNF5aTyVYVY44w', // Replace with your server key
+          );
+        }
+      }
+    } catch (e) {
+      print('Error sending push notification: $e');
+    }
   }
 
   Future<void> _showChatHead(Map<String, dynamic> messageData) async {
@@ -386,7 +489,7 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: backgroundColor,
+      backgroundColor: Colors.grey[400],
       appBar: AppBar(
         title: StreamBuilder<DocumentSnapshot>(
           stream: _firestore
@@ -403,7 +506,8 @@ class _MessagePageState extends State<MessagePage> with WidgetsBindingObserver {
             );
           },
         ),
-        backgroundColor: foregroundColor,
+        backgroundColor: Colors.deepPurple,
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(

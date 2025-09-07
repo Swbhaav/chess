@@ -69,6 +69,7 @@ class _YoutubeHomePageState extends State<YoutubeHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[400],
       appBar: AppBar(
         title: Text('Youtube'),
         backgroundColor: Colors.redAccent,
