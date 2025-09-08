@@ -1,3 +1,6 @@
+import 'dart:isolate';
+import 'dart:ui';
+
 import 'package:flutter_overlay_window/flutter_overlay_window.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -5,6 +8,9 @@ class ChatHeadService {
   static final ChatHeadService _instance = ChatHeadService._internal();
   factory ChatHeadService() => _instance;
   ChatHeadService._internal();
+
+  static const String _kPortNameHome = 'UI';
+  SendPort? overlayPort;
 
   Future<bool> checkOverlayPermission() async {
     try {
@@ -83,12 +89,13 @@ class ChatHeadService {
         flag: OverlayFlag.focusPointer,
         visibility: NotificationVisibility.visibilityPublic,
         positionGravity: PositionGravity.none,
-        width: 60,
-        height: 60,
+        width: 100,
+        height: 120,
         startPosition: const OverlayPosition(100, 200),
       );
 
       await Future.delayed(const Duration(milliseconds: 300));
+      _initializePortCommunication();
 
       bool isNowActive = await FlutterOverlayWindow.isActive();
       print('Overlay started successfully: $isNowActive');
@@ -97,6 +104,132 @@ class ChatHeadService {
     } catch (e) {
       print('Error showing overlay: $e');
       return false;
+    }
+  }
+
+  void _initializePortCommunication() {
+    try {
+      overlayPort = IsolateNameServer.lookupPortByName('OVERLAY');
+      print('Overlay port communication initialized: ${overlayPort != null}');
+    } catch (e) {
+      print('Error initializing port communication: $e');
+    }
+  }
+
+  Future<bool> showChatHeadForMessage({
+    required String senderName,
+    required String message,
+    required String chatRoomId,
+    int unreadCount = 1,
+    String? senderAvatar,
+  }) async {
+    try {
+      print('Showing chat head for new message from: $senderName');
+
+      bool hasPermission = await checkOverlayPermission();
+      if (!hasPermission) {
+        print('No overlay permission - requesting...');
+        hasPermission = await requestOverlayPermissionWithGuidance();
+        if (!hasPermission) {
+          print('Failed to get overlay permission');
+          return false;
+        }
+      }
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (!isActive) {
+        await showChatHead();
+
+        await Future.delayed(const Duration(milliseconds: 800));
+      }
+
+      await _sendMessageToOverlay({
+        'senderName': senderName,
+        'message': message,
+        'chatRoomId': chatRoomId,
+        'unredaCount': unreadCount,
+        if (senderAvatar != null) 'senderAvatar': senderAvatar,
+      });
+      return true;
+    } catch (e) {
+      print('Error showing chat head for message: $e');
+      return false;
+    }
+  }
+
+  Future<bool> updateChatHeadMessage({
+    String? senderName,
+    String? message,
+    String? chatRoomId,
+    int? unreadCount,
+    String? senderAvatar,
+  }) async {
+    try {
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (!isActive) {
+        return false;
+      }
+
+      Map<String, dynamic> updateData = {};
+      if (senderName != null) updateData['senderName'] = senderName;
+      if (message != null) updateData['message'] = message;
+      if (chatRoomId != null) updateData['unreadCount'] = unreadCount;
+      if (senderAvatar != null) updateData['senderAvatar'] = senderAvatar;
+
+      await _sendMessageToOverlay(updateData);
+      return true;
+    } catch (e) {
+      print('Error updating chat head message: $e');
+      return false;
+    }
+  }
+
+  Future<void> _sendMessageToOverlay(Map<String, dynamic> data) async {
+    try {
+      if (overlayPort == null) {
+        overlayPort = IsolateNameServer.lookupPortByName('OVERLAY');
+      }
+      if (overlayPort != null) {
+        overlayPort!.send(data);
+        print('Message sent to overlay; $data');
+      } else {
+        print('Overlay prot not found - trying alternative method');
+
+        try {
+          await FlutterOverlayWindow.shareData(data);
+        } catch (e) {
+          print('Alternative data sharing also failed: $e');
+        }
+      }
+    } catch (e) {
+      print('Error sending message to overlay: $e');
+    }
+  }
+
+  Future<void> incrementUnreadCount(String chatRoomId) async {
+    try {
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (isActive) {
+        await _sendMessageToOverlay({
+          'action': 'incrementUnread',
+          'chatRoomId': chatRoomId,
+        });
+      }
+    } catch (e) {
+      print('Error incrementing unread count: $e');
+    }
+  }
+
+  Future<void> clearUnreadCount(String chatRoomId) async {
+    try {
+      bool isActive = await FlutterOverlayWindow.isActive();
+      if (isActive) {
+        await _sendMessageToOverlay({
+          'action': 'clearUnread',
+          'chatRoomId': chatRoomId,
+        });
+      }
+    } catch (e) {
+      print('Error clearing unread count: $e');
     }
   }
 
@@ -156,6 +289,16 @@ class ChatHeadService {
     }
   }
 
+  // Convenience method to expand chat head
+  Future<void> expandChatHead() async {
+    await resizeOverlay(350, 350, false);
+  }
+
+  // Convenience method to collapse chat head
+  Future<void> collapseChatHead() async {
+    await resizeOverlay(100, 120, true);
+  }
+
   Future<void> updateOverlayPosition(double x, double y) async {
     try {
       bool isActive = await FlutterOverlayWindow.isActive();
@@ -207,6 +350,39 @@ class ChatHeadService {
       print('============================');
     } catch (e) {
       print('Error debugging permission status: $e');
+    }
+  }
+
+  static Future<void> onMessageReceived({
+    required String senderName,
+    required String message,
+    required String chatRoomId,
+    String? senderAvatar,
+  }) async {
+    try {
+      final chatHeadService = ChatHeadService();
+
+      bool isActive = await chatHeadService.isOverlayActive;
+
+      if (isActive) {
+        await chatHeadService.incrementUnreadCount(chatRoomId);
+        await chatHeadService.updateChatHeadMessage(
+          senderName: senderName,
+          message: message,
+          chatRoomId: chatRoomId,
+          senderAvatar: senderAvatar,
+        );
+      } else {
+        await chatHeadService.showChatHeadForMessage(
+          senderName: senderName,
+          message: message,
+          chatRoomId: chatRoomId,
+          unreadCount: 1,
+          senderAvatar: senderAvatar,
+        );
+      }
+    } catch (e) {
+      print('Error handling received message: $e');
     }
   }
 }

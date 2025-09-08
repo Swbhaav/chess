@@ -1,4 +1,5 @@
 import 'package:chessgame/component/message_model.dart';
+import 'package:chessgame/services/chat/chathead_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -53,6 +54,43 @@ class ChatService {
         .doc(chatRoomID)
         .collection("messages")
         .add(newMessage.toMap());
+
+    _triggerChatHeadForReceiver(receiverID, message, chatRoomID);
+  }
+
+  Future<void> _triggerChatHeadForReceiver(
+    String receiverID,
+    String message,
+    String chatRoomID,
+  ) async {
+    try {
+      final currentUser = _auth.currentUser;
+      if (currentUser == null) return;
+
+      final receiverDoc = await _firestore
+          .collection('Users')
+          .doc(receiverID)
+          .get();
+      if (!receiverDoc.exists) return;
+
+      final receiverData = receiverDoc.data() as Map<String, dynamic>;
+
+      final bool isReceiverOnline = receiverData['isOnline'] ?? false;
+
+      if (!isReceiverOnline) {
+        final chatHeadService = ChatHeadService();
+
+        await chatHeadService.showChatHeadForMessage(
+          senderName: currentUser.email!.split('@')[0],
+          message: message,
+          chatRoomId: chatRoomID,
+          unreadCount: 1,
+          senderAvatar: receiverData['avatarUrl'],
+        );
+      }
+    } catch (e) {
+      print('Error triggering chat head: $e');
+    }
   }
 
   // get messages
@@ -86,5 +124,37 @@ class ChatService {
       }
       return {'isOnline': false};
     });
+  }
+
+  Future<Map<String, dynamic>> getUserInfo(String userID) async {
+    try {
+      final doc = await _firestore.collection('Users').doc(userID).get();
+      if (doc.exists) {
+        return doc.data() as Map<String, dynamic>;
+      }
+      return {};
+    } catch (e) {
+      print('Error getting user info: $e');
+      return {};
+    }
+  }
+
+  Future<void> clearUnreadCount(String chatRoomID) async {
+    try {
+      final chatHeadService = ChatHeadService();
+      await chatHeadService.clearUnreadCount(chatRoomID);
+    } catch (e) {
+      print('Error clearing unread count: $e');
+    }
+  }
+
+  Future<bool> isChatHeadActive() async {
+    try {
+      final chatHeadService = ChatHeadService();
+      return await chatHeadService.isOverlayActive;
+    } catch (e) {
+      print('Error checking chat head status: $e');
+      return false;
+    }
   }
 }

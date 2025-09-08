@@ -206,21 +206,25 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
                               _pulseAnimation.value *
                               (_isLongPressing ? 0.9 : 1.0),
                           child: Container(
-                            width: 100,
-                            height: 100,
+                            width: 80.0,
+                            height: 80.0,
                             decoration: BoxDecoration(
                               color: _isLongPressing ? Colors.red : color,
                               shape: BoxShape.circle,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 8.0,
-                                  offset: const Offset(0, 4),
+                                  color: Colors.black.withOpacity(0.25),
+                                  blurRadius: 12.0,
+                                  offset: const Offset(0, 6),
+                                  spreadRadius: 2.0,
                                 ),
                               ],
-                              border: Border.all(color: Colors.white, width: 3),
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 4.0,
+                              ),
                             ),
-                            child: _buildChatHeadContent(),
+                            child: ClipOval(child: _buildChatHeadContent()),
                           ),
                         );
                       },
@@ -231,28 +235,28 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
             ),
             if (unreadCount > 0)
               Positioned(
-                top: 0,
-                right: 0,
+                top: 8,
+                right: 8,
                 child: AnimatedBuilder(
                   animation: _scaleAnimation,
                   builder: (context, child) {
                     return Transform.scale(
                       scale: _scaleAnimation.value,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(6),
                         decoration: const BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
+                          minWidth: 24,
+                          minHeight: 24,
                         ),
                         child: Text(
                           unreadCount > 4 ? '4+' : unreadCount.toString(),
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
