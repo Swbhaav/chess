@@ -57,12 +57,12 @@ dependencies:
   googleapis_auth: ^2.0.0
   url_launcher: ^6.3.2
   mime: ^2.0.0
-  video_player: ^2.10.0
+#  video_player: ^2.10.0
   flutter_overlay_window: ^0.5.0
   firebase_messaging: ^16.0.1
   zego_zimkit: ^1.19.6
   zego_zim: ^2.21.1+2
-#  jitsi_meet_flutter_sdk: ^11.4.0
+  jitsi_meet_flutter_sdk: ^11.4.0
 
 
 dev_dependencies:
