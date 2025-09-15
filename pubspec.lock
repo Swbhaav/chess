@@ -289,6 +289,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.0.3"
+  equatable:
+    dependency: transitive
+    description:
+      name: equatable
+      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.7"
   fake_async:
     dependency: transitive
     description:
@@ -824,6 +832,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.2"
+  intl:
+    dependency: transitive
+    description:
+      name: intl
+      sha256: "3df61194eb431efc39c4ceba583b95633a403f46c9fd341e550ce0bfa50e9aa5"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.20.2"
   iris_method_channel:
     dependency: transitive
     description:
@@ -1561,50 +1577,66 @@ packages:
     dependency: transitive
     description:
       name: zego_express_engine
-      sha256: "5d7e446196b5836e395765cd298b96265d9f04c56f6da8a21dc60bbfef721e32"
+      sha256: aa61abc57d0b1208b3c3d72495143dac1947edbaaefed3d75b27a05657842eb6
       url: "https://pub.dev"
     source: hosted
-    version: "3.21.0"
+    version: "3.22.0"
   zego_plugin_adapter:
     dependency: transitive
     description:
       name: zego_plugin_adapter
-      sha256: "0d11a21950a82cf55d3240fe38b5da4736c83674ce01c8064dafddeaab27f0b9"
+      sha256: "66f225d27615665cb876b795bf75d1bd824bd2cdd531b0785bb5287a6c5caf8e"
       url: "https://pub.dev"
     source: hosted
-    version: "2.13.10"
+    version: "2.13.11"
   zego_uikit:
     dependency: transitive
     description:
       name: zego_uikit
-      sha256: bbbfa1edde34cb508d294c3fa394f4442f5b9534b543c5e3c942f62d6b5bf457
+      sha256: "667a3a8e281d586b10385c22c6ecce2fd82625000fdef9042384ee51d75ded9c"
       url: "https://pub.dev"
     source: hosted
-    version: "2.28.24"
+    version: "2.28.27"
   zego_uikit_prebuilt_call:
     dependency: "direct main"
     description:
       name: zego_uikit_prebuilt_call
-      sha256: d43388b1303cb3aa2f76b6d0f8d41c24cf3c057602f6de4ce7ab7aeb997b6135
+      sha256: "820a0d4465c83753ed0de28ebc46a01fb4cb84b177dcc973e6224ed047328cf9"
       url: "https://pub.dev"
     source: hosted
-    version: "4.18.0"
+    version: "4.18.3"
   zego_uikit_signaling_plugin:
     dependency: "direct main"
     description:
       name: zego_uikit_signaling_plugin
-      sha256: ed2ab0818086cbe6c88fe610c5069fa5290182bb217cd08043f5d24c18b85796
+      sha256: d0bdf6875de015b30a16c9f0a0c931096c4550d0b41e1db599b08a14bade803b
       url: "https://pub.dev"
     source: hosted
-    version: "2.8.16"
+    version: "2.8.17"
   zego_zim:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: zego_zim
       sha256: "15f26f94393a64567b54e71d75b3fb4d9bb7f5dc34ac6f299389625396952ac1"
       url: "https://pub.dev"
     source: hosted
     version: "2.21.1+2"
+  zego_zim_audio:
+    dependency: transitive
+    description:
+      name: zego_zim_audio
+      sha256: a748a0d32edad8d9898960b9d1d1ad2c658581b727e2013d4ac72003e1a51488
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0+7"
+  zego_zimkit:
+    dependency: "direct main"
+    description:
+      name: zego_zimkit
+      sha256: cb8d19c41bd72b382f0d0d29cc2e291b0a371ada0cdc3a92b807aa8694c93e82
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.19.6"
   zego_zpns:
     dependency: transitive
     description:

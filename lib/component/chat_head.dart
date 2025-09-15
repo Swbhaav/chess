@@ -206,8 +206,8 @@ class _OverlayWidgetStateState extends State<OverlayWidgetState>
                               _pulseAnimation.value *
                               (_isLongPressing ? 0.9 : 1.0),
                           child: Container(
-                            width: 80.0,
-                            height: 80.0,
+                            width: 100.0,
+                            height: 100.0,
                             decoration: BoxDecoration(
                               color: _isLongPressing ? Colors.red : color,
                               shape: BoxShape.circle,

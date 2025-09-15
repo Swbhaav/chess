@@ -2,6 +2,7 @@ import 'package:chessgame/helper/global_chat_listener.dart';
 import 'package:chessgame/pages/Feed.dart';
 import 'package:chessgame/pages/youtubePages/videopage.dart';
 import 'package:chessgame/services/auth/auth_gate.dart';
+import 'package:chessgame/services/notification/enhanced_noti_service.dart';
 import 'package:chessgame/services/notification/noti_service.dart';
 import 'package:chessgame/viewmodel/yt_video_view_model.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -64,6 +65,8 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  EnhancedNotificationService notificationService =
+      EnhancedNotificationService();
   @override
   void initState() {
     super.initState();
@@ -71,6 +74,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _initializeOverlay();
 
     GlobalChatListener.initialize();
+    notificationService.getDeviceToken();
   }
 
   @override

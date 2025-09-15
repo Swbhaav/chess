@@ -1,0 +1,35 @@
+import 'package:googleapis_auth/auth_io.dart';
+
+class GetServerKey {
+  Future<String> getServerKeyToken() async {
+    final scopes = [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/firebase.database',
+      'https://www.googleapis.com/auth/firebase.messaging',
+    ];
+
+    final client = await clientViaServiceAccount(
+      ServiceAccountCredentials.fromJson({
+        "type": "service_account",
+        "project_id": "chess-app-fdaec",
+        "private_key_id": "244284b79916ada4989c27c3190afdd1a4c7aa9c",
+        "private_key":
+            "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCgHCBkkS9rFKW7\nB+dbrf6FuC8TcM2YAXVlfhcSXxDYGJ9smeLKscRq8tAbKLuR/z4uqgz1QD2iChgd\n5/r9hiUcNVD/QsSbfO7I5kxjQIY6B2QuCHkbvkEUGUhqFsKzuQDgVk4WpdOUPhz9\nNqBhnjIpYcP90qTNVNjq7/oPaihd58nwjgUDH+pe1/uSOmlS6If1ZPXPZHHn8mhJ\nMOfpvCXY4CXrs8K0nKo4LwyvysKfSzQ/cvmoSv5eHlTdHpNi70r2iY1sF1OfeZ5T\nJCJ63X0mKw+X70JDKt9KKBmQx8xEZaLupOJ7udaiIPNFjkI7rSobtARvLyZIfTH3\nT7NS2n0LAgMBAAECggEAMkNiL/AcMMOUm7iJexCOXLBLpxC8mkGq9ye0WoIZqZ1h\nPxi4R+WywdhkWIJbECRPAxtDYiK+toXwuELBWqGoOMjMGrZ9PkrkM5GI3Ye+G62C\nV6k1S+5YQ9UEFLn8eatUiRjO/vEkEN/G/f8OLlcZbEBS5PYh4owGZQrdN8Wd0oyY\nUQMLgKvFKTMCIx17yUYitzcKNGwzb1blxMVz/jMBvQSsqQ2l75NZZLkdHeQgL3Hs\n7b4wRR1+HSAX2VAeB3QnS2Of9O3tZQW/ivaqPUo04LoSL6CqBCYnSBUp9YeJt0vU\n82U7a2cr2IkT1ERIQjMxbnQ+/mQdvGixxXMN1qbW8QKBgQDXJmhI5dQvGPQyKrp6\nvx3H4g253KVQidt+gCgiXjFBjhJ+UCCeAShFYfO3/VIXG7GkCEvlAfRoeLkiED81\nDqZLKYRVx68sM9BhJ0lmYPTtGNCnoIea7oCrMgl07/tlxO4yUoyYYN1rbRlhtU5y\nKqzqK0JHtluyBFkW1MXgJeNMTQKBgQC+gm89sr51AiYKeqRBA7RNrwd7g2Cwyj0s\ne7lNRsVMqbALbY6gcVeQaTNrTkpoB3fdBF8sTMb6s19QMqGCt7OZv/5hxFY1Ei64\nH4ItG6t3TdhkNmFWSuH0aJhCZTQIvijSmDw9QYayVZfzjARtwvdLo9MyX774ugUF\ne4UH4yu6twKBgCWq8cMhid6dDdPiqzdmUn52U1ThDohlOmqRYXVy7Ei/6Pj4al1/\ncl+DYLorvb2R+a3wTelQSEwqJq+SDJ7ra63pHOQvy7l/cNIxoKYt/3OrToyqjFNR\nwnE2l3VDts4AhnuE/FyJSPrP5Qu4RH20fwWYgUgw4yjtnfNjWSl/OKZZAoGBALhL\naB+wlayNuo0ynUlDsx3fb4adzmDYFBu/SMAn8V+7W9GCV5KAcuwByTtKTpKafurx\nerxZPbhy44aqpDHXUkgvQoADtj267DU0TfMjLFnKlcZEER+wayvML1czngXDJ6yq\nlsPPauWEBe4WCobAMAkdX4cAtrbZBViLaGL78Wa7AoGAHI+sJAM4hD35YY6EWbJ4\nuAebW18lAyV+dhf2X67JO4KmBHSiFDzyQTnLqOP/fP5rO52OQ7o0Bq6FXodEp9YH\ntIwWNK91Pr1yA+pwGAhtMXgt5PB4PIk42XI1+F6K7L1ZhZCUuJPjIWDlIeWGOxp2\njkWSCveEIbytTtgLfu1aDG4=\n-----END PRIVATE KEY-----\n",
+        "client_email":
+            "firebase-adminsdk-fbsvc@chess-app-fdaec.iam.gserviceaccount.com",
+        "client_id": "102758050902217309174",
+        "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+        "token_uri": "https://oauth2.googleapis.com/token",
+        "auth_provider_x509_cert_url":
+            "https://www.googleapis.com/oauth2/v1/certs",
+        "client_x509_cert_url":
+            "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40chess-app-fdaec.iam.gserviceaccount.com",
+        "universe_domain": "googleapis.com",
+      }),
+      scopes,
+    );
+
+    final accessServerKey = client.credentials.accessToken.data;
+    return accessServerKey;
+  }
+}

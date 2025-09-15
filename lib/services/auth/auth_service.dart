@@ -1,3 +1,4 @@
+import 'package:chessgame/services/notification/enhanced_noti_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -15,6 +16,8 @@ class AuthService {
     ],
   );
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  EnhancedNotificationService notificationService =
+      EnhancedNotificationService();
 
   Future<String> getCurrentUserStatus() async {
     try {
@@ -88,6 +91,7 @@ class AuthService {
         'uid': userCredential.user!.uid,
         'email': email,
         'status': "Unavalible",
+        'device token': notificationService.getDeviceToken(),
       });
       return userCredential;
     } on FirebaseAuthException catch (e) {

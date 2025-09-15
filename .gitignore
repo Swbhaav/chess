@@ -13,6 +13,8 @@
 migrate_working_dir/
 lib/firebase/firebase_options.dart
 lib/values/constant.dart
+lib/services/serverKey.dart
+
 
 
 # IntelliJ related
