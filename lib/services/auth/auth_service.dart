@@ -87,11 +87,13 @@ class AuthService {
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
+      String? deviceToken = await EnhancedNotificationService.getToken();
       firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
         'status': "Unavalible",
-        'device token': notificationService.getDeviceToken(),
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
       });
       return userCredential;
     } on FirebaseAuthException catch (e) {

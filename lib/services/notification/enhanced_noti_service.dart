@@ -1,7 +1,9 @@
 import 'dart:convert';
 
 import 'package:chessgame/services/notification/noti_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:googleapis/shared.dart';
 import 'package:http/http.dart' as http;
 
 class EnhancedNotificationService {
@@ -9,16 +11,18 @@ class EnhancedNotificationService {
       FirebaseMessaging.instance;
   static final NotiService _localNotificationService = NotiService();
   static Function(Map<String, dynamic>)? _onChatNotificationTap;
-
-  // Store user tokens instead of topic subscriptions
-  static final Map<String, String> _userTokens = {}; // user_id -> device_token
-  static final Map<String, List<String>> _locationTokens =
-      {}; // location -> list of tokens
-  static final Map<String, List<String>> _metadataTokens =
-      {}; // metadata_key_value -> list of tokens
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static String? _currentUserId;
   static String? _currentUserToken;
+
+  static const String userCollection = 'Users';
+  static const String fcmTokensCollection = 'fcmToken';
+
+  // Legacy in-memory storage (for backward compatibility)
+  static final Map<String, String> _userTokens = {};
+  static final Map<String, List<String>> _locationTokens = {};
+  static final Map<String, List<String>> _metadataTokens = {};
 
   static Future<void> initialize({
     Function(Map<String, dynamic>)? onChatNotificationTap,
@@ -39,11 +43,13 @@ class EnhancedNotificationService {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
       print('FCM User Granted permission');
+
       // Get and store the current device token
       _currentUserToken = await getToken();
       if (_currentUserToken != null && userId != null) {
-        _userTokens[userId] = _currentUserToken!;
-        print('Stored token for user: $userId');
+        // Store token in Firestore
+        await _storeTokenInFirestore(userId, _currentUserToken!);
+        print('Stored token for user: $userId in Firestore');
       }
     } else {
       print('FCM User declined or has not accepted permission');
@@ -64,7 +70,238 @@ class EnhancedNotificationService {
     }
   }
 
-  Future<String> getDeviceToken() async {
+  // Store token in Firestore
+  static Future<void> _storeTokenInFirestore(
+    String userId,
+    String deviceToken,
+  ) async {
+    try {
+      await _firestore
+          .collection(userCollection)
+          .doc(userId)
+          .collection(fcmTokensCollection)
+          .doc(deviceToken) // Use token as document ID for uniqueness
+          .set({
+            'token': deviceToken,
+            'userId': userId,
+            'createdAt': FieldValue.serverTimestamp(),
+            'updatedAt': FieldValue.serverTimestamp(),
+            'isActive': true,
+          });
+
+      print('Token stored in Firestore for user: $userId');
+    } catch (e) {
+      print('Error storing token in Firestore: $e');
+    }
+  }
+
+  // Get token from Firestore for a specific user
+  static Future<String?> getTokenFromFirestore(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(userCollection)
+          .doc(userId)
+          .collection(fcmTokensCollection)
+          .where('isActive', isEqualTo: true)
+          .orderBy('updatedAt', descending: true)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        return querySnapshot.docs.first['token'];
+      }
+      return null;
+    } catch (e) {
+      print('Error getting token from Firestore: $e');
+      return null;
+    }
+  }
+
+  // Get all active tokens for a user (in case user has multiple devices)
+  static Future<List<String>> getAllUserTokens(String userId) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection(userCollection)
+          .doc(userId)
+          .collection(fcmTokensCollection)
+          .where('isActive', isEqualTo: true)
+          .get();
+
+      return querySnapshot.docs.map((doc) => doc['token'] as String).toList();
+    } catch (e) {
+      print('Error getting all user tokens: $e');
+      return [];
+    }
+  }
+
+  // Mark token as inactive when user logs out or token becomes invalid
+  static Future<void> deactivateToken(String userId, String deviceToken) async {
+    try {
+      await _firestore
+          .collection(userCollection)
+          .doc(userId)
+          .collection(fcmTokensCollection)
+          .doc(deviceToken)
+          .update({
+            'isActive': false,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      print('Token deactivated for user: $userId');
+    } catch (e) {
+      print('Error deactivating token: $e');
+    }
+  }
+
+  // Send to multiple users by their IDs
+  static Future<bool> sendNotificationToMultipleUsers({
+    required List<String> userIds,
+    required String title,
+    required String body,
+    required Map<String, dynamic> data,
+    required String serverKey,
+  }) async {
+    try {
+      if (userIds.isEmpty) {
+        print('No user IDs provided');
+        return false;
+      }
+
+      bool allSuccess = true;
+
+      for (String userId in userIds) {
+        bool success = await sendNotificationToUserById(
+          targetUserId: userId,
+          title: title,
+          body: body,
+          data: data,
+          serverKey: serverKey,
+        );
+
+        if (!success) {
+          allSuccess = false;
+          print('Failed to send to user: $userId');
+        }
+
+        // Add small delay to avoid rate limiting
+        await Future.delayed(const Duration(milliseconds: 100));
+      }
+
+      return allSuccess;
+    } catch (e) {
+      print('Error sending to multiple users: $e');
+      return false;
+    }
+  }
+
+  // Handle token refresh
+  static Future<void> handleTokenRefresh() async {
+    _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+      print('FCM Token refreshed: $newToken');
+
+      if (_currentUserId != null) {
+        // Store new token in Firestore
+        await _storeTokenInFirestore(_currentUserId!, newToken);
+        _currentUserToken = newToken;
+        print('Refreshed token stored for user: $_currentUserId');
+      }
+    });
+  }
+
+  // Update user targeting with Firestore integration
+  // Remove the second updateUserTargeting method and enhance the first one
+  static Future<void> updateUserTargeting({
+    String? userId,
+    String? deviceToken,
+    String? location,
+    Map<String, String>? metadata,
+  }) async {
+    try {
+      // If userId and deviceToken provided, register the token
+      if (userId != null && deviceToken != null) {
+        await registerUserToken(
+          userId: userId,
+          deviceToken: deviceToken,
+          location: location,
+          metadata: metadata,
+        );
+      }
+
+      // Update Firestore with location/metadata if userId is available
+      if (userId != null && (location != null || metadata != null)) {
+        Map<String, dynamic> updateData = {};
+
+        if (location != null) {
+          updateData['location'] = location;
+        }
+
+        if (metadata != null) {
+          updateData['metadata'] = metadata;
+        }
+
+        updateData['updatedAt'] = FieldValue.serverTimestamp();
+
+        await _firestore
+            .collection(userCollection)
+            .doc(userId)
+            .update(updateData);
+      }
+
+      print('User targeting updated successfully');
+    } catch (e) {
+      print('Update user targeting error: $e');
+    }
+  }
+
+  static Future<void> registerUserToken({
+    required String userId,
+    required String deviceToken,
+    String? location,
+    Map<String, String>? metadata,
+  }) async {
+    // Store in memory for backward compatibility
+    _userTokens[userId] = deviceToken;
+
+    // Store in Firestore (preferred method)
+    await _storeTokenInFirestore(userId, deviceToken);
+
+    // Handle location-based storage
+    if (location != null) {
+      String cleanLocation = location.toLowerCase().replaceAll(' ', '_');
+      _locationTokens[cleanLocation] ??= [];
+      if (!_locationTokens[cleanLocation]!.contains(deviceToken)) {
+        _locationTokens[cleanLocation]!.add(deviceToken);
+      }
+    }
+
+    // Handle metadata-based storage
+    if (metadata != null) {
+      for (String key in metadata.keys) {
+        _metadataTokens[key] ??= [];
+        if (!_metadataTokens[key]!.contains(deviceToken)) {
+          _metadataTokens[key]!.add(deviceToken);
+        }
+      }
+    }
+  }
+
+  // Get user info from Firestore
+  static Future<Map<String, dynamic>?> getUserInfo(String userId) async {
+    try {
+      final doc = await _firestore.collection(userCollection).doc(userId).get();
+
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      print('Error getting user info: $e');
+      return null;
+    }
+  }
+
+  // The rest of your existing methods remain the same...
+  static Future<String> getDeviceToken() async {
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -74,38 +311,6 @@ class EnhancedNotificationService {
     String? token = await _firebaseMessaging.getToken();
     print('Token => $token');
     return token!;
-  }
-
-  // Store user token with metadata
-  static Future<void> registerUserToken({
-    required String userId,
-    required String deviceToken,
-    String? location,
-    Map<String, String>? metadata,
-  }) async {
-    _userTokens[userId] = deviceToken;
-
-    if (location != null) {
-      String cleanLocation = location.toLowerCase().replaceAll(' ', '_');
-      if (!_locationTokens.containsKey(cleanLocation)) {
-        _locationTokens[cleanLocation] = [];
-      }
-      _locationTokens[cleanLocation]!.add(deviceToken);
-    }
-
-    if (metadata != null) {
-      metadata.forEach((key, value) {
-        String metadataKey =
-            '${key}_${value.toLowerCase().replaceAll(' ', '_')}';
-        if (!_metadataTokens.containsKey(metadataKey)) {
-          _metadataTokens[metadataKey] = [];
-        }
-        _metadataTokens[metadataKey]!.add(deviceToken);
-      });
-    }
-
-    print('Registered token for user: $userId');
-    print('Total users registered: ${_userTokens.length}');
   }
 
   static Future<void> _handleBackgroundMessage(RemoteMessage message) async {
@@ -175,31 +380,42 @@ class EnhancedNotificationService {
     try {
       print('Sending to device token: ${deviceToken.substring(0, 10)}...');
 
-      final response = await http.post(
-        Uri.parse('https://fcm.googleapis.com/fcm/send'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'key=$serverKey',
-        },
-        body: jsonEncode({
-          'to': deviceToken, // Direct device token
-          'notification': {'title': title, 'body': body, 'sound': 'default'},
-          'data': data,
-          'priority': 'high',
-          'android': {
-            'priority': 'high',
-            'notification': {
-              'channel_id': 'chess_game_channel',
-              'sound': 'default',
+      final response = await http
+          .post(
+            Uri.parse('https://fcm.googleapis.com/fcm/send'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'key=$serverKey',
             },
-          },
-        }),
-      );
+            body: jsonEncode({
+              'to': deviceToken,
+              'notification': {
+                'title': title,
+                'body': body,
+                'sound': 'default',
+              },
+              'data': data,
+              'priority': 'high',
+              'android': {
+                'priority': 'high',
+                'notification': {
+                  'channel_id': 'chess_game_channel',
+                  'sound': 'default',
+                },
+              },
+            }),
+          )
+          .timeout(const Duration(seconds: 30)); // Add timeout
 
       print('FCM Response: ${response.statusCode}');
       print('FCM Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
+        final responseBody = jsonDecode(response.body);
+        if (responseBody['failure'] == 1) {
+          print('FCM reported failure: ${responseBody['results']}');
+          return false;
+        }
         print('Notification sent successfully to device');
         return true;
       } else {
@@ -250,7 +466,7 @@ class EnhancedNotificationService {
   }) async {
     try {
       if (deviceTokens.isEmpty) {
-        print('❌ No device tokens provided');
+        print('No device tokens provided');
         return false;
       }
 
@@ -294,7 +510,7 @@ class EnhancedNotificationService {
 
       if (!_locationTokens.containsKey(cleanLocation) ||
           _locationTokens[cleanLocation]!.isEmpty) {
-        print('❌ No devices registered for location: $targetLocation');
+        print('No devices registered for location: $targetLocation');
         return false;
       }
 
@@ -364,28 +580,6 @@ class EnhancedNotificationService {
     );
   }
 
-  // User management methods
-  static Future<void> updateUserTargeting({
-    String? userId,
-    String? deviceToken,
-    String? location,
-    Map<String, String>? metadata,
-  }) async {
-    try {
-      if (userId != null && deviceToken != null) {
-        await registerUserToken(
-          userId: userId,
-          deviceToken: deviceToken,
-          location: location,
-          metadata: metadata,
-        );
-      }
-      print('User targeting updated successfully');
-    } catch (e) {
-      print('Update user targeting error: $e');
-    }
-  }
-
   static Map<String, dynamic> getUserTargetingInfo() {
     return {
       'currentUserId': _currentUserId ?? 'Not set',
@@ -451,6 +645,18 @@ class EnhancedNotificationService {
         data: {'type': 'targeted_test', 'timestamp': DateTime.now().toString()},
         serverKey: serverKey,
       );
+    }
+  }
+
+  static Future<void> cleanupInvalidTokens(String userId) async {
+    try {
+      final tokens = await getAllUserTokens(userId);
+      for (String token in tokens) {
+        // Test if token is still valid by sending a test notification
+        // If it fails, mark as inactive
+      }
+    } catch (e) {
+      print('Error cleaning up tokens: $e');
     }
   }
 }

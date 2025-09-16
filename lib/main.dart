@@ -74,7 +74,6 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     _initializeOverlay();
 
     GlobalChatListener.initialize();
-    notificationService.getDeviceToken();
   }
 
   @override

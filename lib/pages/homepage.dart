@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../game_board.dart';
+import 'chatOptions.dart';
 import 'chat_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -52,7 +53,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     List<Widget> pages = [
       GameBoard(),
       AllVideoPages(),
-      ChatPage(),
+      ChatOptions(),
       NotificationPage(),
     ];
     return Scaffold(
