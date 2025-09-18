@@ -23,6 +23,9 @@ class _NotificationPageState extends State<NotificationPage> {
   // Selected targeting options
   String _selectedTargetType = 'immediate'; // immediate, user, location
 
+  // Loading state for async operations
+  bool _isLoading = false;
+
   @override
   void initState() {
     super.initState();
@@ -132,6 +135,10 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> _sendTargetedNotification() async {
+    if (_isLoading) return;
+
+    setState(() => _isLoading = true);
+
     try {
       String title = _titleController.text.trim();
       String body = _bodyController.text.trim();
@@ -165,6 +172,10 @@ class _NotificationPageState extends State<NotificationPage> {
             _showSnackBar('Please enter User ID', Colors.red);
             return;
           }
+
+          // Add debug logging
+          print('Attempting to send notification to user: $userId');
+
           success =
               await EnhancedNotificationService.sendNotificationToUserById(
                 targetUserId: userId,
@@ -181,6 +192,9 @@ class _NotificationPageState extends State<NotificationPage> {
             _showSnackBar('Please enter location', Colors.red);
             return;
           }
+
+          print('Attempting to send notification to location: $location');
+
           success =
               await EnhancedNotificationService.sendNotificationToLocation(
                 targetLocation: location,
@@ -195,11 +209,18 @@ class _NotificationPageState extends State<NotificationPage> {
       if (success || _selectedTargetType == 'immediate') {
         _showSnackBar('Notification sent successfully!', Colors.green);
       } else {
-        _showSnackBar('Failed to send notification', Colors.red);
+        _showSnackBar(
+          'Failed to send notification. Check targeting info.',
+          Colors.red,
+        );
       }
     } catch (e) {
       print('Error sending notification: $e');
       _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -242,17 +263,92 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
-  void _showUserTargetingInfo() {
-    Map<String, dynamic> info =
-        EnhancedNotificationService.getUserTargetingInfo();
-    _showDialog('Current User Targeting', info.toString());
+  // FIXED: Make this method async and handle the Future properly
+  Future<void> _showUserTargetingInfo() async {
+    try {
+      // Show loading indicator
+      _showSnackBar('Loading targeting info...', Colors.blue);
+
+      // Get the targeting info (now async)
+      Map<String, dynamic> info =
+          await EnhancedNotificationService.getUserTargetingInfo();
+
+      // Format the info for better readability
+      String formattedInfo = _formatTargetingInfo(info);
+
+      _showDialog('Current User Targeting Info', formattedInfo);
+    } catch (e) {
+      print('Error getting targeting info: $e');
+      _showSnackBar('Error getting targeting info: $e', Colors.red);
+    }
+  }
+
+  // NEW: Format targeting info for better display
+  String _formatTargetingInfo(Map<String, dynamic> info) {
+    StringBuffer buffer = StringBuffer();
+
+    buffer.writeln('📱 CURRENT USER INFO:');
+    buffer.writeln('User ID: ${info['currentUserId']}');
+    buffer.writeln('User Token: ${info['currentUserToken']}');
+    buffer.writeln('Has Token: ${info['hasCurrentUserToken']}');
+    buffer.writeln('');
+
+    buffer.writeln('📊 REGISTRATION STATS:');
+    buffer.writeln('Registered Users: ${info['registeredUsers']}');
+    buffer.writeln('Memory Tokens: ${info['memoryTokenCount']}');
+    buffer.writeln('Registered Locations: ${info['registeredLocations']}');
+    buffer.writeln('Registered Metadata: ${info['registeredMetadata']}');
+    buffer.writeln('');
+
+    if (info['registeredUsersDetails'] != null &&
+        (info['registeredUsersDetails'] as List).isNotEmpty) {
+      buffer.writeln('👥 REGISTERED USER IDs:');
+      for (String userId in info['registeredUsersDetails']) {
+        buffer.writeln('• $userId');
+      }
+    } else {
+      buffer.writeln('⚠️ No users currently registered in memory');
+      buffer.writeln('Try sending a notification first or check Firestore');
+    }
+
+    return buffer.toString();
+  }
+
+  // NEW: Add a method to manually load tokens from Firestore
+  Future<void> _loadTokensFromFirestore() async {
+    try {
+      _showSnackBar('Loading tokens from Firestore...', Colors.blue);
+      await EnhancedNotificationService.loadUserTokensFromFirestore();
+      _showSnackBar('Tokens loaded successfully!', Colors.green);
+    } catch (e) {
+      print('Error loading tokens: $e');
+      _showSnackBar('Error loading tokens: $e', Colors.red);
+    }
+  }
+
+  // NEW: Test notification to current user
+  Future<void> _testCurrentUserNotification() async {
+    try {
+      String serverKey = await getServerKey.getServerKeyToken();
+      await EnhancedNotificationService.testTargetedNotification(
+        serverKey: serverKey,
+      );
+      _showSnackBar('Test notification sent!', Colors.green);
+    } catch (e) {
+      print('Error sending test notification: $e');
+      _showSnackBar('Error sending test: $e', Colors.red);
+    }
   }
 
   void _showSnackBar(String message, Color color) {
     if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message), backgroundColor: color));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: color,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 
@@ -261,7 +357,15 @@ class _NotificationPageState extends State<NotificationPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
-        content: SelectableText(content),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              content,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -293,19 +397,43 @@ class _NotificationPageState extends State<NotificationPage> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Main send button
+                  // Main send button with loading state
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
+                        backgroundColor: _isLoading
+                            ? Colors.grey
+                            : Colors.deepPurple,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                       ),
-                      onPressed: _sendTargetedNotification,
-                      child: const Text(
-                        'Send Targeted Notification',
-                        style: TextStyle(color: Colors.white, fontSize: 16),
-                      ),
+                      onPressed: _isLoading ? null : _sendTargetedNotification,
+                      child: _isLoading
+                          ? const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Sending...',
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ],
+                            )
+                          : const Text(
+                              'Send Targeted Notification',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
                     ),
                   ),
 
@@ -326,6 +454,18 @@ class _NotificationPageState extends State<NotificationPage> {
                         ),
                       ),
                       const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange,
+                          ),
+                          onPressed: _testCurrentUserNotification,
+                          child: const Text(
+                            'Test Self',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
 
@@ -354,6 +494,42 @@ class _NotificationPageState extends State<NotificationPage> {
                           onPressed: _showUserTargetingInfo,
                           child: const Text(
                             'Show Targeting Info',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 10),
+
+                  // NEW: Additional utility buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.purple,
+                          ),
+                          onPressed: _loadTokensFromFirestore,
+                          child: const Text(
+                            'Load from Firestore',
+                            style: TextStyle(color: Colors.white, fontSize: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                          ),
+                          onPressed: () async {
+                            await EnhancedNotificationService.testNotification();
+                            _showSnackBar('Local test sent!', Colors.green);
+                          },
+                          child: const Text(
+                            'Test Local',
                             style: TextStyle(color: Colors.white, fontSize: 12),
                           ),
                         ),

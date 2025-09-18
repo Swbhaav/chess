@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:chessgame/services/notification/noti_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:googleapis/shared.dart';
 import 'package:http/http.dart' as http;
 
 class EnhancedNotificationService {
@@ -47,9 +46,10 @@ class EnhancedNotificationService {
       // Get and store the current device token
       _currentUserToken = await getToken();
       if (_currentUserToken != null && userId != null) {
-        // Store token in Firestore
+        // Store token in both Firestore AND in-memory for immediate access
         await _storeTokenInFirestore(userId, _currentUserToken!);
-        print('Stored token for user: $userId in Firestore');
+        _userTokens[userId] = _currentUserToken!; // Add this line
+        print('Stored token for user: $userId in Firestore and memory');
       }
     } else {
       print('FCM User declined or has not accepted permission');
@@ -62,6 +62,9 @@ class EnhancedNotificationService {
     FirebaseMessaging.onBackgroundMessage(_handleBackgroundMessage);
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+    // Handle token refresh
+    await handleTokenRefresh();
 
     RemoteMessage? initialMessage = await _firebaseMessaging
         .getInitialMessage();
@@ -89,7 +92,9 @@ class EnhancedNotificationService {
             'isActive': true,
           });
 
-      print('Token stored in Firestore for user: $userId');
+      // Also store in memory for immediate access
+      _userTokens[userId] = deviceToken;
+      print('Token stored in Firestore and memory for user: $userId');
     } catch (e) {
       print('Error storing token in Firestore: $e');
     }
@@ -108,7 +113,10 @@ class EnhancedNotificationService {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        return querySnapshot.docs.first['token'];
+        String token = querySnapshot.docs.first['token'];
+        // Cache in memory for future use
+        _userTokens[userId] = token;
+        return token;
       }
       return null;
     } catch (e) {
@@ -147,6 +155,8 @@ class EnhancedNotificationService {
             'updatedAt': FieldValue.serverTimestamp(),
           });
 
+      // Remove from memory cache
+      _userTokens.remove(userId);
       print('Token deactivated for user: $userId');
     } catch (e) {
       print('Error deactivating token: $e');
@@ -198,18 +208,17 @@ class EnhancedNotificationService {
   static Future<void> handleTokenRefresh() async {
     _firebaseMessaging.onTokenRefresh.listen((newToken) async {
       print('FCM Token refreshed: $newToken');
+      _currentUserToken = newToken;
 
       if (_currentUserId != null) {
-        // Store new token in Firestore
+        // Store new token in Firestore and memory
         await _storeTokenInFirestore(_currentUserId!, newToken);
-        _currentUserToken = newToken;
         print('Refreshed token stored for user: $_currentUserId');
       }
     });
   }
 
   // Update user targeting with Firestore integration
-  // Remove the second updateUserTargeting method and enhance the first one
   static Future<void> updateUserTargeting({
     String? userId,
     String? deviceToken,
@@ -300,7 +309,21 @@ class EnhancedNotificationService {
     }
   }
 
-  // The rest of your existing methods remain the same...
+  // FIXED: Load user tokens from Firestore into memory cache
+  static Future<void> loadUserTokensFromFirestore() async {
+    try {
+      if (_currentUserId != null) {
+        String? token = await getTokenFromFirestore(_currentUserId!);
+        if (token != null) {
+          _userTokens[_currentUserId!] = token;
+          print('Loaded token for current user from Firestore');
+        }
+      }
+    } catch (e) {
+      print('Error loading tokens from Firestore: $e');
+    }
+  }
+
   static Future<String> getDeviceToken() async {
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
@@ -428,7 +451,7 @@ class EnhancedNotificationService {
     }
   }
 
-  // Send to specific user by ID (using stored token)
+  // FIXED: Send to specific user by ID (using stored token with Firestore fallback)
   static Future<bool> sendNotificationToUserById({
     required String targetUserId,
     required String title,
@@ -437,14 +460,29 @@ class EnhancedNotificationService {
     required String serverKey,
   }) async {
     try {
-      if (!_userTokens.containsKey(targetUserId)) {
-        print('❌ No device token found for user: $targetUserId');
-        return false;
+      String? deviceToken;
+
+      // First try to get from memory cache
+      if (_userTokens.containsKey(targetUserId)) {
+        deviceToken = _userTokens[targetUserId];
+        print('✅ Found token in memory for user: $targetUserId');
+      } else {
+        // If not in memory, try to get from Firestore
+        print(
+          '⚠️ Token not found in memory, checking Firestore for user: $targetUserId',
+        );
+        deviceToken = await getTokenFromFirestore(targetUserId);
+
+        if (deviceToken != null) {
+          print('✅ Found token in Firestore for user: $targetUserId');
+        } else {
+          print('❌ No device token found for user: $targetUserId');
+          return false;
+        }
       }
 
-      String deviceToken = _userTokens[targetUserId]!;
       return await sendNotificationToDevice(
-        deviceToken: deviceToken,
+        deviceToken: deviceToken!,
         title: title,
         body: body,
         data: data,
@@ -580,15 +618,23 @@ class EnhancedNotificationService {
     );
   }
 
-  static Map<String, dynamic> getUserTargetingInfo() {
+  // FIXED: Get user targeting info with better details
+  static Future<Map<String, dynamic>> getUserTargetingInfo() async {
+    // Load any missing tokens from Firestore
+    await loadUserTokensFromFirestore();
+
     return {
       'currentUserId': _currentUserId ?? 'Not set',
       'currentUserToken': _currentUserToken != null
           ? '${_currentUserToken!.substring(0, 10)}...'
           : 'Not set',
       'registeredUsers': _userTokens.length,
+      'registeredUsersDetails': _userTokens.keys.toList(),
       'registeredLocations': _locationTokens.length,
       'registeredMetadata': _metadataTokens.length,
+      'memoryTokenCount': _userTokens.length,
+      'hasCurrentUserToken':
+          _currentUserId != null && _userTokens.containsKey(_currentUserId!),
     };
   }
 

@@ -76,6 +76,9 @@ class AuthService {
         email: email,
         password: password,
       );
+
+      await _initializeNotificationForUser(userCredential.user!.uid);
+
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.code);
@@ -87,7 +90,7 @@ class AuthService {
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
-      String? deviceToken = await EnhancedNotificationService.getToken();
+
       firestore.collection("Users").doc(userCredential.user!.uid).set({
         'uid': userCredential.user!.uid,
         'email': email,
@@ -95,6 +98,9 @@ class AuthService {
         'createdAt': FieldValue.serverTimestamp(),
         'lastSeen': FieldValue.serverTimestamp(),
       });
+
+      await _initializeNotificationForUser(userCredential.user!.uid);
+
       return userCredential;
     } on FirebaseAuthException catch (e) {
       throw Exception(e.code);
@@ -103,7 +109,25 @@ class AuthService {
 
   /// Sign Out
   Future<void> signOut() async {
-    return await _auth.signOut();
+    try {
+      final user = _auth.currentUser;
+      if (user != null) {
+        String? deviceToken = await EnhancedNotificationService.getToken();
+        if (deviceToken != null) {
+          await EnhancedNotificationService.deactivateToken(
+            user.uid,
+            deviceToken,
+          );
+        }
+
+        await updateUserStatus('offline');
+      }
+      await _auth.signOut();
+      await GoogleSignIn().signOut();
+    } catch (e) {
+      print('Error during sign out: $e');
+      await _auth.signOut();
+    }
   }
 
   /// Sign In With Google
@@ -134,6 +158,8 @@ class AuthService {
         'uid': userCredential.user!.uid,
         'email': gUser.email,
         'status': "Unavalible",
+        'createdAt': FieldValue.serverTimestamp(),
+        'lastSeen': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true)); // this prevent overwriting existing data
       // Sign in to Firebase with the Google credential
       return {
@@ -155,11 +181,103 @@ class AuthService {
   /// Delete Account
   Future<void> deleteAccount() async {
     try {
-      await FirebaseAuth.instance.currentUser!.delete();
+      final user = _auth.currentUser;
+      if (user != null) {
+        String? deviceToken = await EnhancedNotificationService.getToken();
+        if (deviceToken != null) {
+          await EnhancedNotificationService.deactivateToken(
+            user.uid,
+            deviceToken,
+          );
+        }
+        await _firestore.collection('Users').doc(user.uid).delete();
+        await user.delete();
+      }
     } catch (e) {
+      print('Error deleting account: $e');
       throw Exception(e);
     }
   }
 
-  /// Phone Auth
+  Future<void> _initializeNotificationForUser(String userId) async {
+    try {
+      print('Initializing notification for user: $userId');
+
+      await EnhancedNotificationService.initialize(
+        userId: userId,
+        onChatNotificationTap: (data) {
+          print('Notification tapped with data: $data');
+        },
+      );
+
+      print('Notification service initialized successfully for user: $userId');
+    } catch (e) {
+      print('Error initiailizing notification service: $e');
+    }
+  }
+
+  Future<void> registerUserForNotifications() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        print('No authenticated user found');
+        return;
+      }
+
+      await _initializeNotificationForUser(user.uid);
+    } catch (e) {
+      print('Error registering user for notifications: $e');
+    }
+  }
+
+  Future<void> updateUserTargeting({
+    String? location,
+    Map<String, String>? metadata,
+  }) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return;
+
+      String? deviceToken = await EnhancedNotificationService.getToken();
+      if (deviceToken == null) return;
+
+      await EnhancedNotificationService.updateUserTargeting(
+        userId: user.uid,
+        deviceToken: deviceToken,
+        location: location,
+        metadata: metadata,
+      );
+
+      print('User targeting updated successfully');
+    } catch (e) {
+      print('Error updating user targeting: $e');
+    }
+  }
+
+  Future<bool> hasValidNotificationToken() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return false;
+
+      String? token = await EnhancedNotificationService.getTokenFromFirestore(
+        user.uid,
+      );
+      return token != null;
+    } catch (e) {
+      print('Error checking notification token: $e');
+      return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> getCurrentUserNotificationInfo() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) return null;
+
+      return await EnhancedNotificationService.getUserInfo(user.uid);
+    } catch (e) {
+      print('Error getting user notification info: $e');
+      return null;
+    }
+  }
 }
