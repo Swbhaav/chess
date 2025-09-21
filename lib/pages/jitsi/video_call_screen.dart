@@ -14,15 +14,13 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   final AuthService _auth = AuthService();
   late TextEditingController meetingIdController;
   late TextEditingController nameController;
-  final JitsiMeet _jitsiMeet = JitsiMeet();
   bool isAudioMuted = true;
   bool isVideoMuted = true;
+  final JitsiMeet _jitsiMeet = JitsiMeet();
 
   @override
   void initState() {
-    // TODO: implement initState
     meetingIdController = TextEditingController();
-
     nameController = TextEditingController(text: _auth.getCurrentUser()!.email);
     super.initState();
   }
@@ -46,12 +44,25 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       var options = JitsiMeetConferenceOptions(
         room: meetingIdController.text,
         configOverrides: {
+          // Use configOverrides instead of config
           "startWithAudioMuted": isAudioMuted,
           "startWithVideoMuted": isVideoMuted,
           "subject": "Jitsi with Flutter",
         },
-        userInfo: JitsiMeetUserInfo(email: _auth.getCurrentUser()!.email),
+        userInfo: JitsiMeetUserInfo(
+          displayName: nameController.text,
+          email: _auth.getCurrentUser()!.email,
+        ),
+        featureFlags: {
+          "pip.enabled": false,
+          "fullscreen.enabled": false,
+          "welcomepage.enabled": false,
+          "prejoinpage.enabled": false,
+        },
       );
+
+      // For older versions, the meeting will open in a separate native view
+      // Embedded view is not available in this version
       await _jitsiMeet.join(options);
     } catch (e) {
       print('Error Joining Meeting: $e');
@@ -72,54 +83,81 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         elevation: 0,
       ),
       body: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             TextField(
               controller: meetingIdController,
               maxLines: 1,
               textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 fillColor: Colors.grey,
                 filled: true,
                 border: InputBorder.none,
-                hintText: 'Room',
+                hintText: 'Room ID',
                 contentPadding: EdgeInsets.fromLTRB(16, 8, 5, 5),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             TextField(
               controller: nameController,
               maxLines: 1,
               textAlign: TextAlign.center,
-              keyboardType: TextInputType.number,
               decoration: const InputDecoration(
                 fillColor: Colors.grey,
                 filled: true,
                 border: InputBorder.none,
-                hintText: 'Name',
+                hintText: 'Your Name',
                 contentPadding: EdgeInsets.fromLTRB(16, 8, 5, 5),
               ),
             ),
-            SizedBox(height: 20),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.deepPurpleAccent,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: InkWell(
-                onTap: _joinMeeting,
-                child: const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: Text(
-                    'Join',
-                    style: TextStyle(
-                      fontSize: 20,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(
+                    isAudioMuted ? Icons.mic_off : Icons.mic,
+                    color: Colors.deepPurple,
                   ),
+                  onPressed: () {
+                    setState(() {
+                      isAudioMuted = !isAudioMuted;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(
+                    isVideoMuted ? Icons.videocam_off : Icons.videocam,
+                    color: Colors.deepPurple,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      isVideoMuted = !isVideoMuted;
+                    });
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _joinMeeting,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurpleAccent,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 30,
+                  vertical: 15,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text(
+                'Join Meeting',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
