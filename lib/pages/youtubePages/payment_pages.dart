@@ -1,8 +1,8 @@
-import 'package:chessgame/pages/khalti/khalti_payment_page.dart';
 import 'package:flutter/material.dart';
 
 import '../../component/custom_Card.dart';
-import '../esewa/esewa.dart';
+import '../ePayment/esewa/esewa.dart';
+import '../ePayment/khalti/khalti_payment_page.dart';
 
 class PaymentPages extends StatelessWidget {
   const PaymentPages({super.key});

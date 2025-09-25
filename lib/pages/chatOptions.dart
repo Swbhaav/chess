@@ -1,6 +1,5 @@
 import 'package:chessgame/pages/chat_page.dart';
 import 'package:chessgame/pages/jitsi/jistDashboard.dart';
-import 'package:chessgame/pages/khalti/khalti_payment_page.dart';
 import 'package:chessgame/pages/youtubePages/payment_pages.dart';
 import 'package:flutter/material.dart';
 
