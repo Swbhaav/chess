@@ -18,6 +18,7 @@ lib/services/notification/serverKey.dart
 
 
 
+
 # IntelliJ related
 *.iml
 *.ipr
