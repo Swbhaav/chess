@@ -16,6 +16,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   flutter_volume_controller
   iris_method_channel
   permission_handler_windows
+  record_windows
   url_launcher_windows
   zego_express_engine
   zego_zim
