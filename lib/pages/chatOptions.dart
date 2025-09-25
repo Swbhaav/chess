@@ -1,5 +1,7 @@
 import 'package:chessgame/pages/chat_page.dart';
 import 'package:chessgame/pages/jitsi/jistDashboard.dart';
+import 'package:chessgame/pages/khalti/khalti_payment_page.dart';
+import 'package:chessgame/pages/youtubePages/payment_pages.dart';
 import 'package:flutter/material.dart';
 
 import '../component/custom_Card.dart';
@@ -77,6 +79,37 @@ class ChatOptions extends StatelessWidget {
                         );
                       },
                     ),
+                    SizedBox(height: 20),
+
+                    VideoOptionCard(
+                      icon: Icons.payment,
+                      title: 'Payment Pages',
+                      subtitle: 'Choose among different options for payment',
+                      color: Colors.greenAccent,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => PaymentPages(),
+                          ),
+                        );
+                      },
+                    ),
+
+                    // IconButton(
+                    //   onPressed: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (context) => KhaltiSDKDemo(),
+                    //       ),
+                    //     );
+                    //   },
+                    //   icon: Icon(Icons.payment, size: 40),
+                    //   style: IconButton.styleFrom(
+                    //     foregroundColor: Colors.white,
+                    //     backgroundColor: Colors.green,
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
