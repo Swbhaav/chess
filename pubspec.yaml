@@ -69,6 +69,7 @@ dependencies:
   just_audio: ^0.10.5
   path_provider: ^2.1.5
   path: ^1.9.1
+  audio_service: ^0.18.18
   esewa_flutter_sdk:
     path: ./esewa_sdk/eSewa Flutter Sdk v2.5.1_21/esewa_flutter_sdk
 
