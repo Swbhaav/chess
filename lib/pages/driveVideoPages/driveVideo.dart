@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:googleapis/drive/v3.dart' as ga;
 import 'package:video_player/video_player.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:flutter/services.dart';
 import '../googleDriveVideo.dart';
 
 class Drivevideo extends StatefulWidget {
@@ -16,13 +18,20 @@ class Drivevideo extends StatefulWidget {
   State<Drivevideo> createState() => _DrivevideoState();
 }
 
-class _DrivevideoState extends State<Drivevideo> {
+class _DrivevideoState extends State<Drivevideo> with WidgetsBindingObserver {
   final drive = GoogleDrive();
   bool _isUploading = false;
   String? _uploadStatus;
   List<String> _uploadHistory = [];
   List<Map<String, String>> _videoList = []; // Store video names and IDs
   late VideoPlayerController _controller;
+  late AudioPlayer _audioPlayer;
+  bool _isVideoMode = true;
+  bool _isInitialized = false;
+
+  // ➡️ Added to store last playback position
+  Duration _lastPosition = Duration.zero;
+
   static final GoogleSignIn _googleSignIn = GoogleSignIn(
     scopes: [
       'https://www.googleapis.com/auth/drive.readonly',
@@ -33,18 +42,51 @@ class _DrivevideoState extends State<Drivevideo> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _audioPlayer = AudioPlayer();
     _initializeVideoPlayer();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    switch (state) {
+      case AppLifecycleState.paused:
+      case AppLifecycleState.inactive:
+        // Save current position before switching
+        if (_controller.value.isInitialized) {
+          _lastPosition = _controller.value.position;
+        }
+        // App is going to background - switch to audio-only mode
+        _switchToAudioMode();
+        break;
+      case AppLifecycleState.resumed:
+        // App is coming to foreground - switch back to video mode
+        _switchToVideoMode();
+        break;
+      case AppLifecycleState.detached:
+      case AppLifecycleState.hidden:
+        break;
+    }
   }
 
   // Play video from Google Drive
   void _initializeVideoPlayer() {
     _controller = VideoPlayerController.networkUrl(Uri.parse(widget.videoUrl))
-      ..addListener(() => setState(() {}))
+      ..addListener(() {
+        if (mounted && _controller.value.isInitialized) {
+          // ➡️ Continuously store current position
+          _lastPosition = _controller.value.position;
+          setState(() {});
+        }
+      })
       ..setLooping(true)
       ..initialize()
           .then((_) {
             if (mounted) {
               setState(() {
+                _isInitialized = true;
                 _controller.play();
               });
             }
@@ -62,9 +104,86 @@ class _DrivevideoState extends State<Drivevideo> {
           });
   }
 
+  Future<void> _switchToAudioMode() async {
+    if (!_controller.value.isPlaying) return;
+
+    try {
+      // Get current playback position
+      _lastPosition = _controller.value.position;
+
+      // Pause video
+      await _controller.pause();
+
+      // Start audio playback from the same position
+      await _audioPlayer.setUrl(widget.videoUrl);
+      await _audioPlayer.seek(_lastPosition);
+      await _audioPlayer.play();
+
+      setState(() {
+        _isVideoMode = false;
+      });
+    } catch (e) {
+      print('Error switching to audio mode: $e');
+    }
+  }
+
+  Future<void> _switchToVideoMode() async {
+    if (!_audioPlayer.playing) return;
+
+    try {
+      // Get current audio position
+      _lastPosition = _audioPlayer.position;
+
+      // Stop audio playback
+      await _audioPlayer.stop();
+
+      // Ensure video controller is still initialized
+      if (!_controller.value.isInitialized) {
+        await _controller.initialize();
+      }
+
+      // Seek and play from saved position
+      await _controller.seekTo(_lastPosition);
+      await _controller.play();
+
+      setState(() {
+        _isVideoMode = true;
+      });
+    } catch (e) {
+      print('Error switching to video mode: $e');
+    }
+  }
+
+  void _togglePlayPause() async {
+    if (_isVideoMode) {
+      // Video mode
+      if (_controller.value.isPlaying) {
+        await _controller.pause();
+      } else {
+        await _controller.play();
+      }
+    } else {
+      // Audio mode
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+      } else {
+        await _audioPlayer.play();
+      }
+    }
+    setState(() {});
+  }
+
+  bool get _isPlaying {
+    return _isVideoMode
+        ? (_controller.value.isInitialized && _controller.value.isPlaying)
+        : _audioPlayer.playing;
+  }
+
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
+    _audioPlayer.dispose();
     super.dispose();
   }
 
@@ -140,7 +259,7 @@ class _DrivevideoState extends State<Drivevideo> {
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Drive Video'),
+        title: Text('Drive Video ${_isVideoMode ? "(Video)" : "(Audio Only)"}'),
         actions: [
           IconButton(
             onPressed: _isUploading ? null : _pickAndUploadVideo,
@@ -154,67 +273,52 @@ class _DrivevideoState extends State<Drivevideo> {
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
             Center(
-              child: _controller.value.isInitialized
+              child: _isVideoMode && _isInitialized
                   ? AspectRatio(
                       aspectRatio: _controller.value.aspectRatio,
                       child: VideoPlayer(_controller),
                     )
-                  : CircularProgressIndicator(),
+                  : _isVideoMode
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[900],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.audiotrack, size: 64, color: Colors.white),
+                          SizedBox(height: 16),
+                          Text(
+                            'Audio Only Mode',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Video continues playing in background',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             FloatingActionButton(
-              onPressed: () {
-                setState(() {
-                  _controller.value.isPlaying
-                      ? _controller.pause()
-                      : _controller.play();
-                });
-              },
-
+              onPressed: _togglePlayPause,
+              backgroundColor: Colors.deepPurple,
               child: Icon(
-                _controller.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                _isPlaying ? Icons.pause : Icons.play_arrow,
+                color: Colors.white,
               ),
             ),
-            SizedBox(height: 10),
-
-            // // Upload status
-            // if (_uploadStatus != null)
-            //   Padding(
-            //     padding: const EdgeInsets.all(8.0),
-            //     child: Text(
-            //       _uploadStatus!,
-            //       style: TextStyle(
-            //         color: _isUploading ? Colors.blue : Colors.black,
-            //         fontWeight: FontWeight.bold,
-            //       ),
-            //     ),
-            //   ),
-            // // Video list
-            // Expanded(
-            //   child: ListView.builder(
-            //     itemCount: _videoList.length,
-            //     itemBuilder: (context, index) {
-            //       final video = _videoList[index];
-            //       return ListTile(
-            //         title: Text(video['name']!),
-            //         trailing: const Icon(Icons.play_arrow),
-            //         onTap: () => playVideoFromDrive(
-            //           context,
-            //           video['name']!,
-            //         ), // Pass file name
-            //       );
-            //     },
-            //   ),
-            // ),
-            // // Upload history
-            // if (_uploadHistory.isNotEmpty)
-            //   Padding(
-            //     padding: const EdgeInsets.all(8.0),
-            //     child: const Text(
-            //       'Upload History:',
-            //       style: TextStyle(fontWeight: FontWeight.bold),
-            //     ),
-            //   ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
