@@ -5,12 +5,11 @@ import 'package:chessgame/pages/jitsi/video_call_screen.dart';
 import 'package:flutter/material.dart';
 
 import '../../component/MeetingButton.dart';
-import '../../services/auth/auth_service.dart';
 
 class Dashboard extends StatelessWidget {
   Dashboard({super.key});
   final JitsiProvider jitsiProvider = JitsiProvider();
-  final AuthService _authService = AuthService();
+
   createNewMeeting() async {
     var random = Random();
     String roomName = (random.nextInt(100000000) + 10000000).toString();

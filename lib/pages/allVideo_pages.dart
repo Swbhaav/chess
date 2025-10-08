@@ -1,4 +1,5 @@
 import 'package:chessgame/pages/Feed.dart';
+import 'package:chessgame/pages/audio_recorder.dart';
 import 'package:chessgame/pages/driveVideoPages/drive_video_list.dart';
 import 'package:chessgame/pages/youtubePages/youtube_home.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +62,22 @@ class AllVideoPages extends StatelessWidget {
                         Navigator.of(
                           context,
                         ).push(MaterialPageRoute(builder: (context) => Feed()));
+                      },
+                    ),
+
+                    SizedBox(height: 20),
+
+                    VideoOptionCard(
+                      icon: Icons.mic,
+                      title: 'Record Audio',
+                      subtitle: 'Record Audio',
+                      color: Colors.yellowAccent,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => AudioRecorderPage(),
+                          ),
+                        );
                       },
                     ),
 

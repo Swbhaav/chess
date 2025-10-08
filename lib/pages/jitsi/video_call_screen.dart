@@ -61,8 +61,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         },
       );
 
-      // For older versions, the meeting will open in a separate native view
-      // Embedded view is not available in this version
       await _jitsiMeet.join(options);
     } catch (e) {
       print('Error Joining Meeting: $e');

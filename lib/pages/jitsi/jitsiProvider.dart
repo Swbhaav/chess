@@ -37,19 +37,12 @@ class JitsiProvider {
               : _authService.getCurrentUser()!.email,
         ),
         featureFlags: {
-          // Try these different flag formats based on your SDK version
           "welcome-page-enabled": false,
           "add-people-enabled": true,
           "prejoin-page-enabled": false,
           "lobby-mode-enabled": false,
           "pip-enabled": false,
           "fullscreen-enabled": false,
-
-          // Alternative format if the above doesn't work
-          "welcomepage.enabled": false,
-          "addpeople.enabled": true,
-          "prejoinpage.enabled": false,
-          "lobbymode.enabled": false,
         },
       );
 
@@ -59,7 +52,6 @@ class JitsiProvider {
     }
   }
 
-  // Method to get options for embedded view (if supported)
   JitsiMeetConferenceOptions getMeetingOptions({
     required String roomName,
     required bool isAudioMuted,
