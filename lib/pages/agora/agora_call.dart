@@ -3,7 +3,7 @@ import 'package:chessgame/values/constant.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import '../services/auth/auth_service.dart';
+import '../../services/auth/auth_service.dart';
 
 const channel = 'Test';
 
