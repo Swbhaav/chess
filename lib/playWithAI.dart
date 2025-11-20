@@ -1,19 +1,24 @@
+import 'package:chess/chess.dart' as chess_lib;
 import 'package:chessgame/component/piece.dart';
 import 'package:chessgame/component/square.dart';
 import 'package:chessgame/helper/helper.dart';
 import 'package:chessgame/values/colors.dart';
 import 'package:flutter/material.dart';
-
+import 'package:stockfish/stockfish.dart';
 import 'component/dead_piece.dart';
 
-class GameBoard extends StatefulWidget {
-  GameBoard({super.key});
+class PlayWithAI extends StatefulWidget {
+  PlayWithAI({super.key});
 
   @override
-  State<GameBoard> createState() => _GameBoardState();
+  State<PlayWithAI> createState() => _PlayWithAIState();
 }
 
-class _GameBoardState extends State<GameBoard> {
+class _PlayWithAIState extends State<PlayWithAI> {
+  // creating a stockfish instance
+  late Stockfish stockfish;
+  late chess_lib.Chess chessBoard;
+
   //Creating a game Board using 2D list
   late List<List<ChessPiece?>> board;
 
@@ -25,7 +30,6 @@ class _GameBoardState extends State<GameBoard> {
   int selectedCol = -1;
 
   // List of valid moves for current piece
-  // each move is represented as list of 2 elements: row and column
   List<List<int>> validMoves = [];
 
   // A list of taken white pieces
@@ -34,27 +38,62 @@ class _GameBoardState extends State<GameBoard> {
   // A list of taken black pieces
   List<ChessPiece> blackPieceTaken = [];
 
-  // A boolean to indicate whose turn it is
+  // A boolean to indicate whose turn it is (true = white to move)
   bool isWhiteTurn = true;
 
-  //initial position of kings (keep track of this to make later to see if checkmate)
+  //initial position of kings
   List<int> whiteKingPosition = [7, 4];
   List<int> blackKingPosition = [0, 4];
   bool checkStatus = false;
+
+  // AI state management
+  bool stockfishReady = false;
+  bool isAIThinking = false;
 
   @override
   void initState() {
     super.initState();
     _initializeBoard();
+    stockfish = Stockfish();
+    chessBoard = chess_lib.Chess();
+    _setupStockfish();
   }
 
+  void _setupStockfish() {
+    // Listen to Stockfish state changes
+    stockfish.state.addListener(() {
+      print('Stockfish State: ${stockfish.state.value}');
+      if (stockfish.state.value == StockfishState.ready && !stockfishReady) {
+        stockfish.stdin = 'uci';
+      }
+    });
+
+    // Listen to Stockfish output
+    stockfish.stdout.listen((message) {
+      print('Stockfish: $message');
+
+      if (message.contains('uciok')) {
+        stockfish.stdin = 'isready';
+      } else if (message.contains('readyok')) {
+        setState(() {
+          stockfishReady = true;
+        });
+        print('✓ Stockfish is ready!');
+      } else if (message.startsWith('bestmove')) {
+        _handleStockfishMove(message);
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    stockfish.stdin = 'quit';
+    stockfish.dispose();
     super.dispose();
   }
 
   // INITIALIZE BOARD
   void _initializeBoard() {
-    // Initializing the board with nulls
     List<List<ChessPiece?>> newBoard = List.generate(
       8,
       (index) => List.generate(8, (index) => null),
@@ -62,12 +101,14 @@ class _GameBoardState extends State<GameBoard> {
 
     // Pawn Place
     for (int i = 0; i < 8; i++) {
+      // Black pawns (row 1)
       newBoard[1][i] = ChessPiece(
         type: ChessPieceType.pawn,
         isWhite: false,
-        imagePath: 'lib/images/white-pawn.png',
+        imagePath: 'lib/images/black-pawn.png',
       );
 
+      // White pawns (row 6)
       newBoard[6][i] = ChessPiece(
         type: ChessPieceType.pawn,
         isWhite: true,
@@ -75,21 +116,83 @@ class _GameBoardState extends State<GameBoard> {
       );
     }
 
-    //Rook Position
+    // Black back rank (row 0)
     newBoard[0][0] = ChessPiece(
       type: ChessPieceType.rook,
       isWhite: false,
-      imagePath: 'lib/images/white-rook.png',
+      imagePath: 'lib/images/black-rook.png',
+    );
+    newBoard[0][1] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.knight,
+      imagePath: 'lib/images/black-knight.png',
+    );
+    newBoard[0][2] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.bishop,
+      imagePath: 'lib/images/black-bishop.png',
+    );
+    newBoard[0][3] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.queen,
+      imagePath: 'lib/images/black-queen.png',
+    );
+    newBoard[0][4] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.king,
+      imagePath: 'lib/images/black-king.png',
+    );
+    newBoard[0][5] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.bishop,
+      imagePath: 'lib/images/black-bishop.png',
+    );
+    newBoard[0][6] = ChessPiece(
+      isWhite: false,
+      type: ChessPieceType.knight,
+      imagePath: 'lib/images/black-knight.png',
     );
     newBoard[0][7] = ChessPiece(
       type: ChessPieceType.rook,
       isWhite: false,
-      imagePath: 'lib/images/white-rook.png',
+      imagePath: 'lib/images/black-rook.png',
     );
+
+    // White back rank (row 7)
     newBoard[7][0] = ChessPiece(
       type: ChessPieceType.rook,
       isWhite: true,
       imagePath: 'lib/images/white-rook.png',
+    );
+    newBoard[7][1] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.knight,
+      imagePath: 'lib/images/white-knight.png',
+    );
+    newBoard[7][2] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.bishop,
+      imagePath: 'lib/images/white-bishop.png',
+    );
+    newBoard[7][3] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.queen,
+      imagePath: 'lib/images/white-queen.png',
+    );
+    newBoard[7][4] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.king,
+      imagePath: 'lib/images/white-king.png',
+    );
+    newBoard[7][5] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.bishop,
+      imagePath: 'lib/images/white-bishop.png',
+    );
+    newBoard[7][6] = ChessPiece(
+      isWhite: true,
+      type: ChessPieceType.knight,
+      imagePath: 'lib/images/white-knight.png',
     );
     newBoard[7][7] = ChessPiece(
       type: ChessPieceType.rook,
@@ -97,80 +200,21 @@ class _GameBoardState extends State<GameBoard> {
       imagePath: 'lib/images/white-rook.png',
     );
 
-    //Knight Position
-    newBoard[0][1] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.knight,
-      imagePath: 'lib/images/white-knight.png',
-    );
-    newBoard[0][6] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.knight,
-      imagePath: 'lib/images/white-knight.png',
-    );
-    newBoard[7][1] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.knight,
-      imagePath: 'lib/images/white-knight.png',
-    );
-    newBoard[7][6] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.knight,
-      imagePath: 'lib/images/white-knight.png',
-    );
-
-    // Place Bishop
-    newBoard[0][2] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.bishop,
-      imagePath: 'lib/images/white-bishop.png',
-    );
-    newBoard[0][5] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.bishop,
-      imagePath: 'lib/images/white-bishop.png',
-    );
-    newBoard[7][2] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.bishop,
-      imagePath: 'lib/images/white-bishop.png',
-    );
-    newBoard[7][5] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.bishop,
-      imagePath: 'lib/images/white-bishop.png',
-    );
-
-    //Place Queens
-    newBoard[0][3] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.queen,
-      imagePath: 'lib/images/white-queen.png',
-    );
-
-    newBoard[7][3] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.queen,
-      imagePath: 'lib/images/white-queen.png',
-    );
-
-    //Place king
-    newBoard[0][4] = ChessPiece(
-      isWhite: false,
-      type: ChessPieceType.king,
-      imagePath: 'lib/images/white-king.png',
-    );
-    newBoard[7][4] = ChessPiece(
-      isWhite: true,
-      type: ChessPieceType.king,
-      imagePath: 'lib/images/white-king.png',
-    );
-
     board = newBoard;
+
+    // Reset chess_lib board to starting position
+    chessBoard = chess_lib.Chess();
+
+    // Reset king positions to default
+    whiteKingPosition = [7, 4];
+    blackKingPosition = [0, 4];
   }
 
   // USER SELECTED A PIECE
   void pieceSelected(int row, int col) {
+    // Don't allow moves during AI's turn or when AI is thinking
+    if (!isWhiteTurn || isAIThinking) return;
+
     setState(() {
       // No piece has been selected yet, this is the first selection
       if (selectedPiece == null && board[row][col] != null) {
@@ -179,7 +223,7 @@ class _GameBoardState extends State<GameBoard> {
           selectedRow = row;
           selectedCol = col;
           validMoves = calculateRealValidMoves(row, col, selectedPiece, true);
-          // If in check, filter moves that don't actually get out of check
+
           if (checkStatus) {
             validMoves = validMoves.where((move) {
               return simulatedMoveIsSafe(
@@ -204,7 +248,8 @@ class _GameBoardState extends State<GameBoard> {
       //if there is a piece selected and user taps on a square that is valid move, move
       else if (selectedPiece != null &&
           validMoves.any((element) => element[0] == row && element[1] == col)) {
-        movePiece(row, col);
+        // Use new movePiece signature: fromRow, fromCol, toRow, toCol
+        movePiece(selectedRow, selectedCol, row, col);
       }
     });
   }
@@ -217,26 +262,23 @@ class _GameBoardState extends State<GameBoard> {
       return [];
     }
 
-    // different directions based on their color
-    int direction = piece!.isWhite ? -1 : 1;
+    int direction = piece.isWhite ? -1 : 1;
 
     switch (piece.type) {
       case ChessPieceType.pawn:
-        // Pawns can move forward if the square is not occupied
         if (isInBoard(row + direction, col) &&
             board[row + direction][col] == null) {
           candidateMoves.add([row + direction, col]);
         }
 
-        // pawns can move 2 square forward if they are at their initial positions
         if ((row == 1 && !piece.isWhite) || (row == 6 && piece.isWhite)) {
           if (isInBoard(row + 2 * direction, col) &&
-              board[row + 2 * direction][col] == null) {
+              board[row + 2 * direction][col] == null &&
+              board[row + direction][col] == null) {
             candidateMoves.add([row + 2 * direction, col]);
           }
         }
 
-        // pawns can kill diagonally
         if (isInBoard(row + direction, col - 1) &&
             board[row + direction][col - 1] != null &&
             board[row + direction][col - 1]!.isWhite != piece.isWhite) {
@@ -247,80 +289,22 @@ class _GameBoardState extends State<GameBoard> {
             board[row + direction][col + 1]!.isWhite != piece.isWhite) {
           candidateMoves.add([row + direction, col + 1]);
         }
-
         break;
+
       case ChessPieceType.rook:
-        // Horizontal and vertical direction
         var directions = [
-          [-1, 0], // up
-          [1, 0], //down
-          [0, -1], //left
-          [0, 1], //right
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
         ];
-
         for (var direction in directions) {
           var i = 1;
           while (true) {
             var newRow = row + i * direction[0];
             var newCol = col + i * direction[1];
-            if (!isInBoard(newRow, newCol)) {
-              break;
-            }
-            //checking if there is another piece
-            if (board[newRow][newCol] != null) {
-              if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-                candidateMoves.add([newRow, newCol]); // kill
-              }
-              break;
-            }
-            candidateMoves.add([newRow, newCol]);
-            i++;
-          }
-        }
-        break;
-      case ChessPieceType.knight:
-        var KnightMoves = [
-          [-2, -1], // up 2 left 1
-          [-2, 1], // up 2 right 1
-          [-1, -2], // up 1 left 2
-          [-1, 2], // up 1 right 2
-          [1, -2], // down 1 left 2
-          [1, 2], //down 1 right 2
-          [2, -1], // down 2 left 1
-          [2, 1], //down2 right 1
-        ];
+            if (!isInBoard(newRow, newCol)) break;
 
-        for (var move in KnightMoves) {
-          var newRow = row + move[0];
-          var newCol = col + move[1];
-          if (!isInBoard(newRow, newCol)) {
-            continue;
-          }
-          if (board[newRow][newCol] != null) {
-            if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-              candidateMoves.add([newRow, newCol]); // Capture
-            }
-            continue; //Blocked by our piece
-          }
-          candidateMoves.add([newRow, newCol]);
-        }
-        break;
-      case ChessPieceType.bishop:
-        var directions = [
-          [-1, -1], // up left
-          [-1, 1], //up right
-          [1, -1], //down left
-          [1, 1], //down right
-        ];
-
-        for (var direction in directions) {
-          var i = 1;
-          while (true) {
-            var newRow = row + i * direction[0];
-            var newCol = col + i * direction[1];
-            if (!isInBoard(newRow, newCol)) {
-              break;
-            }
             if (board[newRow][newCol] != null) {
               if (board[newRow][newCol]!.isWhite != piece.isWhite) {
                 candidateMoves.add([newRow, newCol]);
@@ -331,33 +315,51 @@ class _GameBoardState extends State<GameBoard> {
             i++;
           }
         }
-
         break;
-      case ChessPieceType.queen:
-        //all eight directions : up, down, left, right, and all 4 diagonals
-        var directions = [
-          [-1, 0], //up
-          [1, 0], // down
-          [0, -1], // left
-          [0, 1], //right
-          [-1, -1], // up left
-          [-1, 1], // up right
-          [1, -1], // down left
-          [1, 1], // down right
-        ];
 
+      case ChessPieceType.knight:
+        var knightMoves = [
+          [-2, -1],
+          [-2, 1],
+          [-1, -2],
+          [-1, 2],
+          [1, -2],
+          [1, 2],
+          [2, -1],
+          [2, 1],
+        ];
+        for (var move in knightMoves) {
+          var newRow = row + move[0];
+          var newCol = col + move[1];
+          if (!isInBoard(newRow, newCol)) continue;
+
+          if (board[newRow][newCol] != null) {
+            if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+              candidateMoves.add([newRow, newCol]);
+            }
+            continue;
+          }
+          candidateMoves.add([newRow, newCol]);
+        }
+        break;
+
+      case ChessPieceType.bishop:
+        var directions = [
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1],
+        ];
         for (var direction in directions) {
           var i = 1;
           while (true) {
             var newRow = row + i * direction[0];
             var newCol = col + i * direction[1];
-            if (!isInBoard(newRow, newCol)) {
-              break;
-            }
+            if (!isInBoard(newRow, newCol)) break;
 
             if (board[newRow][newCol] != null) {
               if (board[newRow][newCol]!.isWhite != piece.isWhite) {
-                candidateMoves.add([newRow, newCol]); //capture
+                candidateMoves.add([newRow, newCol]);
               }
               break;
             }
@@ -366,24 +368,53 @@ class _GameBoardState extends State<GameBoard> {
           }
         }
         break;
+
+      case ChessPieceType.queen:
+        var directions = [
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1],
+        ];
+        for (var direction in directions) {
+          var i = 1;
+          while (true) {
+            var newRow = row + i * direction[0];
+            var newCol = col + i * direction[1];
+            if (!isInBoard(newRow, newCol)) break;
+
+            if (board[newRow][newCol] != null) {
+              if (board[newRow][newCol]!.isWhite != piece.isWhite) {
+                candidateMoves.add([newRow, newCol]);
+              }
+              break;
+            }
+            candidateMoves.add([newRow, newCol]);
+            i++;
+          }
+        }
+        break;
+
       case ChessPieceType.king:
         var directions = [
-          [-1, 0], //up
-          [1, 0], // down
-          [0, -1], // left
-          [0, 1], //right
-          [-1, -1], // up left
-          [-1, 1], // up right
-          [1, -1], // down left
-          [1, 1], // down right
+          [-1, 0],
+          [1, 0],
+          [0, -1],
+          [0, 1],
+          [-1, -1],
+          [-1, 1],
+          [1, -1],
+          [1, 1],
         ];
-
         for (var direction in directions) {
           var newRow = row + direction[0];
           var newCol = col + direction[1];
-          if (!isInBoard(newRow, newCol)) {
-            continue;
-          }
+          if (!isInBoard(newRow, newCol)) continue;
+
           if (board[newRow][newCol] != null) {
             if (board[newRow][newCol]!.isWhite != piece.isWhite) {
               candidateMoves.add([newRow, newCol]);
@@ -409,12 +440,10 @@ class _GameBoardState extends State<GameBoard> {
     List<List<int>> realValidMoves = [];
     List<List<int>> candidateMoves = calculateRawValidMoves(row, col, piece);
 
-    // after generating all candidate moves, filter out any that would result in a check
     if (checkSimulation) {
       for (var move in candidateMoves) {
         int endRow = move[0];
         int endCol = move[1];
-        // this will simulate if it's safe
         if (simulatedMoveIsSafe(piece!, row, col, endRow, endCol)) {
           realValidMoves.add(move);
         }
@@ -425,37 +454,78 @@ class _GameBoardState extends State<GameBoard> {
     return realValidMoves;
   }
 
-  void movePiece(int newRow, int newCol) {
-    // Capture logic remains the same
-    if (board[newRow][newCol] != null) {
-      var capturedPiece = board[newRow][newCol];
-      if (capturedPiece!.isWhite) {
+  // New movePiece signature that explicitly passes from & to
+  void movePiece(
+    int fromRow,
+    int fromCol,
+    int toRow,
+    int toCol, {
+    bool isAiMove = false,
+  }) {
+    // Basic validations
+    ChessPiece? moving = board[fromRow][fromCol];
+    if (moving == null) return;
+
+    // If it's a player's move, ensure it is their turn
+    if (!isAiMove && moving.isWhite != isWhiteTurn) return;
+
+    // Capture logic
+    ChessPiece? capturedPiece = board[toRow][toCol];
+    if (capturedPiece != null) {
+      if (capturedPiece.isWhite) {
         whitePieceTaken.add(capturedPiece);
       } else {
         blackPieceTaken.add(capturedPiece);
       }
     }
 
-    // King position update
-    if (selectedPiece!.type == ChessPieceType.king) {
-      if (selectedPiece!.isWhite) {
-        whiteKingPosition = [newRow, newCol];
+    // Keep track of old king pos in case we need to revert
+    List<int>? originalKingPosition;
+    if (moving.type == ChessPieceType.king) {
+      originalKingPosition = moving.isWhite
+          ? List.from(whiteKingPosition)
+          : List.from(blackKingPosition);
+      if (moving.isWhite) {
+        whiteKingPosition = [toRow, toCol];
       } else {
-        blackKingPosition = [newRow, newCol];
+        blackKingPosition = [toRow, toCol];
       }
     }
 
-    // Store the current player info BEFORE clearing selectedPiece
-    bool currentPlayerIsWhite = selectedPiece!.isWhite;
+    // Make the move on visual board
+    board[toRow][toCol] = moving;
+    board[fromRow][fromCol] = null;
 
-    // Make the move
-    board[newRow][newCol] = selectedPiece;
-    board[selectedRow][selectedCol] = null;
+    // Update chess library board using algebraic coordinates
+    String fromAlg = _coordsToAlgebraic(fromRow, fromCol);
+    String toAlg = _coordsToAlgebraic(toRow, toCol);
+
+    try {
+      // Use a map with from/to to make the move in chess.dart
+      var result = chessBoard.move({'from': fromAlg, 'to': toAlg});
+
+      if (result == null) {
+        // if chess.dart rejected the move, revert visual board and king pos
+        board[fromRow][fromCol] = moving;
+        board[toRow][toCol] = capturedPiece;
+        if (moving.type == ChessPieceType.king) {
+          if (moving.isWhite)
+            whiteKingPosition = originalKingPosition!;
+          else
+            blackKingPosition = originalKingPosition!;
+        }
+        return;
+      }
+    } catch (e) {
+      print('Error making move in chessBoard: $e');
+    }
+
+    bool currentPlayerIsWhite = moving.isWhite;
 
     // Switch turns
     isWhiteTurn = !isWhiteTurn;
 
-    // Check for check/checkmate (now checking the opponent)
+    // Check for check/checkmate
     bool opponentInCheck = isInCheck(isWhiteTurn);
     bool opponentCheckmate = opponentInCheck && isCheckmate(isWhiteTurn);
 
@@ -490,6 +560,77 @@ class _GameBoardState extends State<GameBoard> {
         SnackBar(content: Text("Check!"), duration: Duration(seconds: 2)),
       );
     }
+
+    // Trigger AI move after player moves
+    if (!isWhiteTurn && !opponentCheckmate && stockfishReady) {
+      Future.delayed(Duration(milliseconds: 300), () {
+        _makeAiMove();
+      });
+    }
+  }
+
+  String _coordsToAlgebraic(int row, int col) {
+    String file = String.fromCharCode('a'.codeUnitAt(0) + col);
+    String rank = (8 - row).toString();
+    return '$file$rank';
+  }
+
+  // Request AI move from Stockfish
+  void _makeAiMove() async {
+    if (!stockfishReady || isAIThinking || isWhiteTurn) return;
+
+    setState(() {
+      isAIThinking = true;
+    });
+
+    try {
+      String fen = chessBoard.fen;
+      print('Requesting AI move for FEN: $fen');
+
+      stockfish.stdin = 'setoption name Skill Level value 10';
+      stockfish.stdin = 'position fen $fen';
+      stockfish.stdin = 'go movetime 1000';
+    } catch (e) {
+      print('Error requesting AI move: $e');
+      setState(() {
+        isAIThinking = false;
+      });
+    }
+  }
+
+  // Handle the best move from Stockfish
+  void _handleStockfishMove(String message) {
+    if (!message.startsWith('bestmove')) return;
+
+    try {
+      String bestMove = message.split(' ')[1];
+      if (bestMove == '(none)' || bestMove.isEmpty) {
+        setState(() {
+          isAIThinking = false;
+        });
+        return;
+      }
+
+      print('AI chose move: $bestMove');
+
+      // Parse UCI move
+      int fromCol = bestMove.codeUnitAt(0) - 'a'.codeUnitAt(0);
+      int fromRow = 8 - int.parse(bestMove[1]);
+      int toCol = bestMove.codeUnitAt(2) - 'a'.codeUnitAt(0);
+      int toRow = 8 - int.parse(bestMove[3]);
+
+      // Execute the AI move directly using the new movePiece signature
+      setState(() {
+        isAIThinking = false;
+      });
+
+      movePiece(fromRow, fromCol, toRow, toCol, isAiMove: true);
+    } catch (e) {
+      print('Error handling Stockfish move: $e');
+      setState(() {
+        isAIThinking = false;
+      });
+    }
   }
 
   bool squareIsAttacked(int row, int col, bool byWhite) {
@@ -509,16 +650,11 @@ class _GameBoardState extends State<GameBoard> {
     return false;
   }
 
-  //Checking if king is in check
   bool isInCheck(bool isWhite) {
-    // Find king position
     List<int> kingPos = isWhite ? whiteKingPosition : blackKingPosition;
-
-    // If the king's square is attacked by the opponent → in check
     return squareIsAttacked(kingPos[0], kingPos[1], !isWhite);
   }
 
-  //Simulate a future move to see if it's safe (Doesn't put your own king under Attack!)
   bool simulatedMoveIsSafe(
     ChessPiece piece,
     int startRow,
@@ -526,34 +662,28 @@ class _GameBoardState extends State<GameBoard> {
     int endRow,
     int endCol,
   ) {
-    //Save the current board state
     ChessPiece? originalDestinationPiece = board[endRow][endCol];
-    //if the piece is the king, save it's current position and update to the new one
     List<int>? originalKingPosition;
+
     if (piece.type == ChessPieceType.king) {
       originalKingPosition = piece.isWhite
-          ? whiteKingPosition
-          : blackKingPosition;
-
-      // update the king position
+          ? List.from(whiteKingPosition)
+          : List.from(blackKingPosition);
       if (piece.isWhite) {
         whiteKingPosition = [endRow, endCol];
       } else {
         blackKingPosition = [endRow, endCol];
       }
     }
-    // simulate the move
+
     board[endRow][endCol] = piece;
     board[startRow][startCol] = null;
 
-    // check if our king is under attack
     bool kingInCheck = isInCheck(piece.isWhite);
 
-    //restore board to original state
     board[startRow][startCol] = piece;
     board[endRow][endCol] = originalDestinationPiece;
 
-    //if the piece was the king, restore it original position
     if (piece.type == ChessPieceType.king) {
       if (piece.isWhite) {
         whiteKingPosition = originalKingPosition!;
@@ -562,27 +692,20 @@ class _GameBoardState extends State<GameBoard> {
       }
     }
 
-    //if king is in check = true, means it's not a safe move. safe move =false
     return !kingInCheck;
   }
 
-  //check if check mate
   bool isCheckmate(bool isWhite) {
-    // Must be in check to be checkmate
     if (!isInCheck(isWhite)) return false;
 
-    // Check all pieces of current color
     for (int row = 0; row < 8; row++) {
       for (int col = 0; col < 8; col++) {
         ChessPiece? piece = board[row][col];
         if (piece == null || piece.isWhite != isWhite) continue;
 
-        // Get all possible moves for this piece
         List<List<int>> moves = calculateRealValidMoves(row, col, piece, true);
 
-        // Test each move to see if it gets out of check
         for (var move in moves) {
-          // Simulate the move
           ChessPiece? original = board[move[0]][move[1]];
           List<int>? originalKingPos;
 
@@ -602,7 +725,6 @@ class _GameBoardState extends State<GameBoard> {
 
           bool stillInCheck = isInCheck(isWhite);
 
-          // Undo the move
           board[row][col] = piece;
           board[move[0]][move[1]] = original;
 
@@ -613,25 +735,24 @@ class _GameBoardState extends State<GameBoard> {
               blackKingPosition = originalKingPos!;
           }
 
-          // If any move gets out of check, not checkmate
           if (!stillInCheck) return false;
         }
       }
     }
 
-    // No moves get out of check - it's checkmate
     return true;
   }
 
-  //Reset To new Game
   void resetGame() {
     _initializeBoard();
+    chessBoard = chess_lib.Chess();
     checkStatus = false;
     whitePieceTaken.clear();
     blackPieceTaken.clear();
     whiteKingPosition = [7, 4];
     blackKingPosition = [0, 4];
     isWhiteTurn = true;
+    isAIThinking = false;
     setState(() {});
   }
 
@@ -642,10 +763,16 @@ class _GameBoardState extends State<GameBoard> {
       appBar: AppBar(
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        title: Text('Chess Game'),
+        title: Text('Play vs AI'),
         elevation: 0,
-
         toolbarHeight: 40,
+        actions: [
+          IconButton(
+            onPressed: resetGame,
+            icon: Icon(Icons.refresh),
+            tooltip: 'New Game',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -665,11 +792,51 @@ class _GameBoardState extends State<GameBoard> {
           ),
 
           //Game Status
-          Text(checkStatus ? 'check' : ''),
+          Container(
+            padding: EdgeInsets.symmetric(vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (checkStatus)
+                  Text(
+                    'CHECK!',
+                    style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                if (isAIThinking)
+                  Row(
+                    children: [
+                      if (checkStatus) SizedBox(width: 16),
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('AI is thinking...'),
+                    ],
+                  ),
+                if (!stockfishReady && !isAIThinking)
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text('Initializing AI...'),
+                    ],
+                  ),
+              ],
+            ),
+          ),
 
           //Chess Board
           Expanded(
-            // This flex property allows us to make this expanded 3X larger than other
             flex: 3,
             child: GridView.builder(
               itemCount: 8 * 8,
@@ -678,17 +845,13 @@ class _GameBoardState extends State<GameBoard> {
                 crossAxisCount: 8,
               ),
               itemBuilder: (context, index) {
-                // get the row and column position
                 int row = index ~/ 8;
                 int col = index % 8;
 
-                //checking if square is selected
                 bool isSelected = selectedRow == row && selectedCol == col;
 
-                // Check if Square is valid move or not
                 bool isValidMove = false;
                 for (var position in validMoves) {
-                  //compare row and col
                   if (position[0] == row && position[1] == col) {
                     isValidMove = true;
                   }
@@ -704,6 +867,7 @@ class _GameBoardState extends State<GameBoard> {
               },
             ),
           ),
+
           //Black pieces taken
           Expanded(
             child: GridView.builder(

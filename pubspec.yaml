@@ -71,6 +71,8 @@ dependencies:
   path: ^1.9.1
   audio_service: ^0.18.18
   flutter_foreground_task: ^9.1.0
+  stockfish: ^1.7.1
+  chess: ^0.8.1
   esewa_flutter_sdk:
     path: ./esewa_sdk/eSewa Flutter Sdk v2.5.1_21/esewa_flutter_sdk
 

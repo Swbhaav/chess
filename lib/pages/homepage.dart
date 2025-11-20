@@ -1,4 +1,5 @@
 import 'package:chessgame/pages/allVideo_pages.dart';
+import 'package:chessgame/pages/chessHome_page.dart';
 import 'package:chessgame/pages/notification_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -51,7 +52,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     List<Widget> pages = [
-      GameBoard(),
+      ChessHomePage(),
       AllVideoPages(),
       ChatOptions(),
       NotificationPage(),
